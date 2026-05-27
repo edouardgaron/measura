@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 const nextConfig: NextConfig = {
   // @react-pdf/renderer runs in Node.js runtime only (not Edge)
-  serverExternalPackages: ['@react-pdf/renderer', 'canvas'],
+  serverExternalPackages: ['@react-pdf/renderer'],
 
   images: {
     remotePatterns: [
