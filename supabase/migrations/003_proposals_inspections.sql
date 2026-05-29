@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   estimate_id     UUID REFERENCES estimates(id) ON DELETE SET NULL,
   created_by      UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  share_token     TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(24), 'base64url'),
+  share_token     TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(24), 'hex'),
   title           TEXT,
   message         TEXT,
   status          TEXT NOT NULL DEFAULT 'draft'

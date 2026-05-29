@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 
 interface Params { params: Promise<{ projectId: string }> }
@@ -28,11 +29,14 @@ export async function POST(req: NextRequest, { params }: Params) {
   const body = await req.json()
   const { title, message, estimate_id, valid_until, locale } = body
 
+  const shareToken = randomBytes(24).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+
   const { data, error } = await supabase
     .from('proposals')
     .insert({
       project_id: projectId,
       created_by: user.id,
+      share_token: shareToken,
       title: title || null,
       message: message || null,
       estimate_id: estimate_id || null,
