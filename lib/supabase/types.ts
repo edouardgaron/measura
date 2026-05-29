@@ -391,6 +391,69 @@ export interface DesignVersion {
 }
 
 // ============================================================
+// Proposals & Inspections
+// ============================================================
+
+export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
+export type InspectionStatus = 'in_progress' | 'completed' | 'archived'
+export type InspectionCategory = 'crack' | 'water_damage' | 'paint' | 'siding' | 'roofing' | 'window' | 'door' | 'structural' | 'other'
+export type InspectionPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type InspectionItemStatus = 'pending' | 'confirmed' | 'repaired' | 'ignored'
+
+export interface Proposal {
+  id: string
+  project_id: string
+  estimate_id: string | null
+  created_by: string | null
+  share_token: string
+  title: string | null
+  message: string | null
+  status: ProposalStatus
+  valid_until: string | null
+  sent_at: string | null
+  viewed_at: string | null
+  accepted_at: string | null
+  rejected_at: string | null
+  client_name: string | null
+  client_signature: string | null
+  client_ip: string | null
+  locale: 'fr' | 'en'
+  created_at: string
+  updated_at: string
+  project?: Project
+  estimate?: Estimate
+}
+
+export interface Inspection {
+  id: string
+  project_id: string
+  created_by: string | null
+  title: string
+  notes: string | null
+  status: InspectionStatus
+  inspected_at: string | null
+  created_at: string
+  updated_at: string
+  items?: InspectionItem[]
+}
+
+export interface InspectionItem {
+  id: string
+  inspection_id: string
+  photo_id: string | null
+  category: InspectionCategory
+  title: string
+  notes: string | null
+  priority: InspectionPriority
+  status: InspectionItemStatus
+  x: number | null
+  y: number | null
+  created_at: string
+  updated_at: string
+  photo?: Photo
+}
+
+// ============================================================
 // Database helper type (Supabase client generic)
 // ============================================================
 
@@ -509,6 +572,24 @@ export interface Database {
         Row: DesignVersion
         Insert: Omit<DesignVersion, 'id' | 'created_at' | 'updated_at' | 'created_by_profile'>
         Update: Partial<Omit<DesignVersion, 'id' | 'created_at' | 'created_by_profile'>>
+        Relationships: []
+      }
+      proposals: {
+        Row: Proposal
+        Insert: Omit<Proposal, 'id' | 'created_at' | 'updated_at' | 'share_token' | 'project' | 'estimate'>
+        Update: Partial<Omit<Proposal, 'id' | 'created_at' | 'project' | 'estimate'>>
+        Relationships: []
+      }
+      inspections: {
+        Row: Inspection
+        Insert: Omit<Inspection, 'id' | 'created_at' | 'updated_at' | 'items'>
+        Update: Partial<Omit<Inspection, 'id' | 'created_at' | 'items'>>
+        Relationships: []
+      }
+      inspection_items: {
+        Row: InspectionItem
+        Insert: Omit<InspectionItem, 'id' | 'created_at' | 'updated_at' | 'photo'>
+        Update: Partial<Omit<InspectionItem, 'id' | 'created_at' | 'photo'>>
         Relationships: []
       }
     }

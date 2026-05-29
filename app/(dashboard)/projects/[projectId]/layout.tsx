@@ -74,8 +74,10 @@ export default async function ProjectLayout({ children, params }: Props) {
     { label: 'Tâches',     href: `/projects/${projectId}/tasks`,        icon: 'CheckSquare',     segment: 'tasks' },
     { label: 'Design',     href: `/projects/${projectId}/design`,       icon: 'Palette',         segment: 'design' },
     { label: 'Modèle 3D',  href: `/projects/${projectId}/model`,        icon: 'Box',             segment: 'model' },
-    { label: 'Rapport',    href: `/projects/${projectId}/report`,       icon: 'FileText',        segment: 'report' },
-    { label: 'Paramètres', href: `/projects/${projectId}/settings`,     icon: 'Settings',        segment: 'settings' },
+    { label: 'Rapport',     href: `/projects/${projectId}/report`,      icon: 'FileText',        segment: 'report' },
+    { label: 'Proposition', href: `/projects/${projectId}/proposal`,    icon: 'FileSignature',   segment: 'proposal' },
+    { label: 'Inspection',  href: `/projects/${projectId}/inspection`,  icon: 'ClipboardList',   segment: 'inspection' },
+    { label: 'Paramètres',  href: `/projects/${projectId}/settings`,    icon: 'Settings',        segment: 'settings' },
   ]
 
   return (

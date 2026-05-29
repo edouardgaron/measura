@@ -14,6 +14,8 @@ import {
   Calculator,
   CheckSquare,
   Palette,
+  FileSignature,
+  ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { ProjectStatus, UnitSystem } from '@/lib/supabase/types'
@@ -206,6 +208,20 @@ export default async function ProjectOverviewPage({ params }: Props) {
             href={`/projects/${projectId}/report`}
             color="green"
           />
+          <ProgressItem
+            icon={<FileSignature className="h-5 w-5" />}
+            label="Propositions"
+            value={0}
+            href={`/projects/${projectId}/proposal`}
+            color="indigo"
+          />
+          <ProgressItem
+            icon={<ClipboardList className="h-5 w-5" />}
+            label="Inspection"
+            value={0}
+            href={`/projects/${projectId}/inspection`}
+            color="red"
+          />
         </div>
       </div>
 
@@ -252,6 +268,20 @@ export default async function ProjectOverviewPage({ params }: Props) {
           label="Générer rapport"
           description="Créer un rapport PDF du projet"
           color="green"
+        />
+        <QuickAction
+          href={`/projects/${projectId}/proposal`}
+          icon={<FileSignature className="h-5 w-5" />}
+          label="Créer proposition"
+          description="Envoyer une proposition au client pour signature"
+          color="indigo"
+        />
+        <QuickAction
+          href={`/projects/${projectId}/inspection`}
+          icon={<ClipboardList className="h-5 w-5" />}
+          label="Inspecter dommages"
+          description="Documenter et suivre les dommages du bâtiment"
+          color="red"
         />
       </div>
 
@@ -351,7 +381,7 @@ function ProgressItem({
   total?: number
   suffix?: string
   href: string
-  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink'
+  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink' | 'indigo' | 'red'
   badge?: string
 }) {
   const colorClasses = {
@@ -361,6 +391,8 @@ function ProgressItem({
     orange: { bg: 'bg-orange-50', text: 'text-orange-600', bar: 'bg-orange-500' },
     teal:   { bg: 'bg-teal-50',   text: 'text-teal-600',   bar: 'bg-teal-500' },
     pink:   { bg: 'bg-pink-50',   text: 'text-pink-600',   bar: 'bg-pink-500' },
+    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', bar: 'bg-indigo-500' },
+    red:    { bg: 'bg-red-50',    text: 'text-red-600',    bar: 'bg-red-500' },
   }
   const c = colorClasses[color]
   const pct = total ? Math.min((value / total) * 100, 100) : 0
@@ -403,7 +435,7 @@ function QuickAction({
   icon: React.ReactNode
   label: string
   description: string
-  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink'
+  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink' | 'indigo' | 'red'
 }) {
   const colorClasses = {
     blue:   'bg-blue-600 hover:bg-blue-700',
@@ -412,6 +444,8 @@ function QuickAction({
     orange: 'bg-orange-500 hover:bg-orange-600',
     teal:   'bg-teal-600 hover:bg-teal-700',
     pink:   'bg-pink-500 hover:bg-pink-600',
+    indigo: 'bg-indigo-600 hover:bg-indigo-700',
+    red:    'bg-red-600 hover:bg-red-700',
   }
 
   return (
