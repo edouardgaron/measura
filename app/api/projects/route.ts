@@ -129,5 +129,5 @@ export async function POST(request: NextRequest) {
     console.error('Failed to create owner member:', memberError.message)
   }
 
-  return NextResponse.json({ project }, { status: 201 })
+  return NextResponse.json({ id: project.id, project }, { status: 201 })
 }

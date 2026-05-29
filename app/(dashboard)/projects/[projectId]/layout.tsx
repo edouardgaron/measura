@@ -1,17 +1,6 @@
 // app/(dashboard)/projects/[projectId]/layout.tsx
 import Link from 'next/link'
-import {
-  ArrowLeft,
-  LayoutDashboard,
-  Camera,
-  Ruler,
-  Box,
-  FileText,
-  Settings,
-  Calculator,
-  CheckSquare,
-  Palette,
-} from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { ProjectStatus } from '@/lib/supabase/types'
 import ProjectTabNav from './ProjectTabNav'
@@ -78,15 +67,15 @@ export default async function ProjectLayout({ children, params }: Props) {
   const address = addressParts.join(', ')
 
   const tabs = [
-    { label: 'Aperçu', href: `/projects/${projectId}`, icon: LayoutDashboard, segment: null },
-    { label: 'Photos', href: `/projects/${projectId}/photos`, icon: Camera, segment: 'photos' },
-    { label: 'Mesures', href: `/projects/${projectId}/measurements`, icon: Ruler, segment: 'measurements' },
-    { label: 'Estimation', href: `/projects/${projectId}/estimate`, icon: Calculator, segment: 'estimate' },
-    { label: 'Tâches', href: `/projects/${projectId}/tasks`, icon: CheckSquare, segment: 'tasks' },
-    { label: 'Design', href: `/projects/${projectId}/design`, icon: Palette, segment: 'design' },
-    { label: 'Modèle 3D', href: `/projects/${projectId}/model`, icon: Box, segment: 'model' },
-    { label: 'Rapport', href: `/projects/${projectId}/report`, icon: FileText, segment: 'report' },
-    { label: 'Paramètres', href: `/projects/${projectId}/settings`, icon: Settings, segment: 'settings' },
+    { label: 'Aperçu',     href: `/projects/${projectId}`,             icon: 'LayoutDashboard', segment: null },
+    { label: 'Photos',     href: `/projects/${projectId}/photos`,       icon: 'Camera',          segment: 'photos' },
+    { label: 'Mesures',    href: `/projects/${projectId}/measurements`, icon: 'Ruler',           segment: 'measurements' },
+    { label: 'Estimation', href: `/projects/${projectId}/estimate`,     icon: 'Calculator',      segment: 'estimate' },
+    { label: 'Tâches',     href: `/projects/${projectId}/tasks`,        icon: 'CheckSquare',     segment: 'tasks' },
+    { label: 'Design',     href: `/projects/${projectId}/design`,       icon: 'Palette',         segment: 'design' },
+    { label: 'Modèle 3D',  href: `/projects/${projectId}/model`,        icon: 'Box',             segment: 'model' },
+    { label: 'Rapport',    href: `/projects/${projectId}/report`,       icon: 'FileText',        segment: 'report' },
+    { label: 'Paramètres', href: `/projects/${projectId}/settings`,     icon: 'Settings',        segment: 'settings' },
   ]
 
   return (

@@ -477,10 +477,8 @@ RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE AS $$
 $$;
 
 -- Profiles
-CREATE POLICY "profiles_select_own" ON profiles FOR SELECT USING (
-  auth.uid() = id
-  OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
-);
+-- NOTE: no self-referential subquery here — that causes infinite recursion in Supabase RLS
+CREATE POLICY "profiles_select_own" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "profiles_update_own"     ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "profiles_insert_trigger" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
@@ -488,11 +486,9 @@ CREATE POLICY "profiles_insert_trigger" ON profiles FOR INSERT WITH CHECK (auth.
 CREATE POLICY "projects_select" ON projects FOR SELECT USING (
   owner_id = auth.uid()
   OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = projects.id AND pm.user_id = auth.uid())
-  OR EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
 );
 CREATE POLICY "projects_insert" ON projects FOR INSERT WITH CHECK (
   owner_id = auth.uid()
-  AND EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','entrepreneur'))
 );
 CREATE POLICY "projects_update" ON projects FOR UPDATE USING (
   owner_id = auth.uid()

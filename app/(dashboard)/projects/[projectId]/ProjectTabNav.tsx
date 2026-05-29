@@ -3,12 +3,21 @@
 
 import Link from 'next/link'
 import { useSelectedLayoutSegment } from 'next/navigation'
+import {
+  LayoutDashboard, Camera, Ruler, Box, FileText,
+  Settings, Calculator, CheckSquare, Palette,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  LayoutDashboard, Camera, Ruler, Box, FileText,
+  Settings, Calculator, CheckSquare, Palette,
+}
 
 interface Tab {
   label: string
   href: string
-  icon: LucideIcon
+  icon: string
   segment: string | null
 }
 
@@ -26,7 +35,7 @@ export default function ProjectTabNav({ tabs }: Props) {
     >
       {tabs.map((tab) => {
         const isActive = tab.segment === segment
-        const Icon = tab.icon
+        const Icon = ICON_MAP[tab.icon]
         return (
           <Link
             key={tab.href}
@@ -37,7 +46,7 @@ export default function ProjectTabNav({ tabs }: Props) {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             }`}
           >
-            <Icon className="h-4 w-4" />
+            {Icon && <Icon className="h-4 w-4" />}
             {tab.label}
           </Link>
         )
