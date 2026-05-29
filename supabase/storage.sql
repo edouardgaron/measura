@@ -36,6 +36,17 @@ ON CONFLICT (id) DO NOTHING;
 -- STORAGE POLICIES — Bucket photos
 -- ============================================================
 
+DROP POLICY IF EXISTS "photos_storage_select"  ON storage.objects;
+DROP POLICY IF EXISTS "photos_storage_insert"  ON storage.objects;
+DROP POLICY IF EXISTS "photos_storage_delete"  ON storage.objects;
+DROP POLICY IF EXISTS "reports_storage_select" ON storage.objects;
+DROP POLICY IF EXISTS "reports_storage_insert" ON storage.objects;
+DROP POLICY IF EXISTS "reports_storage_delete" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_storage_select" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_storage_insert" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_storage_update" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_storage_delete" ON storage.objects;
+
 -- SELECT : membres du projet peuvent voir les photos
 CREATE POLICY "photos_storage_select"
 ON storage.objects FOR SELECT

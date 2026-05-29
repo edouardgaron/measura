@@ -153,7 +153,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Link
-              href="/dashboard/settings/company"
+              href="/settings/company"
               className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">

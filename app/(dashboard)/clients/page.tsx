@@ -66,7 +66,7 @@ export default async function ClientsPage() {
           <p className="text-gray-500 mt-1 max-w-sm">
             Vos clients apparaîtront ici une fois que vous les aurez invités à un projet.
           </p>
-          <Link href="/dashboard/projects/new" className="mt-4">
+          <Link href="/projects/new" className="mt-4">
             <Button>Créer un projet</Button>
           </Link>
         </div>
@@ -96,7 +96,7 @@ export default async function ClientsPage() {
                   {client.projects.slice(0, 2).map((proj) => (
                     <Link
                       key={proj.id}
-                      href={`/dashboard/projects/${proj.id}`}
+                      href={`/projects/${proj.id}`}
                       className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
                     >
                       <FolderOpen className="h-3 w-3" />

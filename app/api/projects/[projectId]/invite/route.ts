@@ -44,7 +44,7 @@ export async function POST(
     )
   }
 
-  const { email } = parsed.data
+  const { email, role } = parsed.data
   const invite_token = randomBytes(32).toString('hex')
 
   // Upsert member row (re-invite if already exists)
@@ -54,7 +54,7 @@ export async function POST(
       {
         project_id: projectId,
         email,
-        role: 'client',
+        role,
         invite_token,
         user_id: null,
         invite_accepted_at: null,

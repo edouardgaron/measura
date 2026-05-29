@@ -94,7 +94,7 @@ export default async function PhotoMeasurePage({ params }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <Link
-            href={`/dashboard/projects/${projectId}/photos`}
+            href={`/projects/${projectId}/photos`}
             className="mt-0.5 flex items-center gap-1 rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             title="Retour aux photos"
           >

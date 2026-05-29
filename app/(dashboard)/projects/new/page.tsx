@@ -1,4 +1,4 @@
-// app/(dashboard)/projects/new/page.tsx
+﻿// app/(dashboard)/projects/new/page.tsx
 'use client'
 
 import * as React from 'react'
@@ -320,7 +320,7 @@ export default function NewProjectPage() {
 
     const { id } = await res.json()
     toast({ variant: 'success', title: 'Projet créé', description: values.title })
-    router.push(`/dashboard/projects/${id}`)
+    router.push(`/projects/${id}`)
   }
 
   const stepTitle = STEPS[currentStep - 1]

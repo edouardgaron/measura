@@ -412,6 +412,17 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at        ON profiles;
+DROP TRIGGER IF EXISTS update_projects_updated_at        ON projects;
+DROP TRIGGER IF EXISTS update_calibrations_updated_at    ON calibrations;
+DROP TRIGGER IF EXISTS update_measurements_updated_at    ON measurements;
+DROP TRIGGER IF EXISTS update_house_models_updated_at    ON house_models;
+DROP TRIGGER IF EXISTS update_companies_updated_at       ON companies;
+DROP TRIGGER IF EXISTS update_estimates_updated_at       ON estimates;
+DROP TRIGGER IF EXISTS update_surface_calc_updated_at    ON surface_calculations;
+DROP TRIGGER IF EXISTS update_tasks_updated_at           ON tasks;
+DROP TRIGGER IF EXISTS update_design_versions_updated_at ON design_versions;
+
 CREATE TRIGGER update_profiles_updated_at          BEFORE UPDATE ON profiles           FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_projects_updated_at          BEFORE UPDATE ON projects           FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_calibrations_updated_at      BEFORE UPDATE ON calibrations       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

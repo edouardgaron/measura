@@ -19,6 +19,7 @@ export const updateProjectSchema = createProjectSchema.partial()
 
 export const inviteClientSchema = z.object({
   email: z.string().email('Courriel invalide'),
+  role: z.enum(['owner', 'editor', 'client']).default('client'),
 })
 
 export type InviteClientInput = z.infer<typeof inviteClientSchema>

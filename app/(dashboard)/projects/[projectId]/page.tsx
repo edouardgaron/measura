@@ -165,21 +165,21 @@ export default async function ProjectOverviewPage({ params }: Props) {
             value={photoCount}
             total={4}
             suffix="/ 4 recommandées"
-            href={`/dashboard/projects/${projectId}/photos`}
+            href={`/projects/${projectId}/photos`}
             color="blue"
           />
           <ProgressItem
             icon={<Ruler className="h-5 w-5" />}
             label="Mesures"
             value={measureCount}
-            href={`/dashboard/projects/${projectId}/measurements`}
+            href={`/projects/${projectId}/measurements`}
             color="purple"
           />
           <ProgressItem
             icon={<Calculator className="h-5 w-5" />}
             label="Estimations"
             value={estimateData ? 1 : 0}
-            href={`/dashboard/projects/${projectId}/estimate`}
+            href={`/projects/${projectId}/estimate`}
             color="orange"
             badge={estimateData ? estimateData.status : undefined}
           />
@@ -189,21 +189,21 @@ export default async function ProjectOverviewPage({ params }: Props) {
             value={tasksDoneCount}
             total={tasksCount || undefined}
             suffix={tasksCount > 0 ? `/ ${tasksCount} total` : undefined}
-            href={`/dashboard/projects/${projectId}/tasks`}
+            href={`/projects/${projectId}/tasks`}
             color="teal"
           />
           <ProgressItem
             icon={<Palette className="h-5 w-5" />}
             label="Design"
             value={0}
-            href={`/dashboard/projects/${projectId}/design`}
+            href={`/projects/${projectId}/design`}
             color="pink"
           />
           <ProgressItem
             icon={<FileText className="h-5 w-5" />}
             label="Rapports"
             value={reportCount}
-            href={`/dashboard/projects/${projectId}/report`}
+            href={`/projects/${projectId}/report`}
             color="green"
           />
         </div>
@@ -212,42 +212,42 @@ export default async function ProjectOverviewPage({ params }: Props) {
       {/* Quick Actions */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <QuickAction
-          href={`/dashboard/projects/${projectId}/settings#invite`}
+          href={`/projects/${projectId}/settings#invite`}
           icon={<UserPlus className="h-5 w-5" />}
           label="Inviter le client"
           description="Envoyer un lien de dépôt de photos"
           color="blue"
         />
         <QuickAction
-          href={`/dashboard/projects/${projectId}/measurements`}
+          href={`/projects/${projectId}/measurements`}
           icon={<Ruler className="h-5 w-5" />}
           label="Prendre mesures"
           description="Annoter et mesurer les photos"
           color="purple"
         />
         <QuickAction
-          href={`/dashboard/projects/${projectId}/estimate`}
+          href={`/projects/${projectId}/estimate`}
           icon={<Calculator className="h-5 w-5" />}
           label="Créer estimation"
           description="Calculer surfaces et préparer un devis"
           color="orange"
         />
         <QuickAction
-          href={`/dashboard/projects/${projectId}/tasks`}
+          href={`/projects/${projectId}/tasks`}
           icon={<CheckSquare className="h-5 w-5" />}
           label="Gérer tâches"
           description="Suivre l'avancement du chantier"
           color="teal"
         />
         <QuickAction
-          href={`/dashboard/projects/${projectId}/design`}
+          href={`/projects/${projectId}/design`}
           icon={<Palette className="h-5 w-5" />}
           label="Choisir couleurs"
           description="Visualiser les matériaux et couleurs"
           color="pink"
         />
         <QuickAction
-          href={`/dashboard/projects/${projectId}/report`}
+          href={`/projects/${projectId}/report`}
           icon={<FileText className="h-5 w-5" />}
           label="Générer rapport"
           description="Créer un rapport PDF du projet"
@@ -288,7 +288,7 @@ export default async function ProjectOverviewPage({ params }: Props) {
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold text-gray-900">Photos récentes</h3>
             <Link
-              href={`/dashboard/projects/${projectId}/photos`}
+              href={`/projects/${projectId}/photos`}
               className="text-sm text-blue-600 hover:underline"
             >
               Voir toutes ({photoCount})
@@ -298,7 +298,7 @@ export default async function ProjectOverviewPage({ params }: Props) {
             {firstFourPhotos.map((photo) => (
               <Link
                 key={photo.id}
-                href={`/dashboard/projects/${projectId}/photos`}
+                href={`/projects/${projectId}/photos`}
                 className="group relative aspect-video overflow-hidden rounded-lg bg-gray-100"
               >
                 <Image

@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import type { ProjectStatus } from '@/lib/supabase/types'
 import ProjectTabNav from './ProjectTabNav'
+import ProjectHeaderActions from '@/components/projects/ProjectHeaderActions'
 
 interface Props {
   children: React.ReactNode
@@ -77,15 +78,15 @@ export default async function ProjectLayout({ children, params }: Props) {
   const address = addressParts.join(', ')
 
   const tabs = [
-    { label: 'Aperçu', href: `/dashboard/projects/${projectId}`, icon: LayoutDashboard, segment: null },
-    { label: 'Photos', href: `/dashboard/projects/${projectId}/photos`, icon: Camera, segment: 'photos' },
-    { label: 'Mesures', href: `/dashboard/projects/${projectId}/measurements`, icon: Ruler, segment: 'measurements' },
-    { label: 'Estimation', href: `/dashboard/projects/${projectId}/estimate`, icon: Calculator, segment: 'estimate' },
-    { label: 'Tâches', href: `/dashboard/projects/${projectId}/tasks`, icon: CheckSquare, segment: 'tasks' },
-    { label: 'Design', href: `/dashboard/projects/${projectId}/design`, icon: Palette, segment: 'design' },
-    { label: 'Modèle 3D', href: `/dashboard/projects/${projectId}/model`, icon: Box, segment: 'model' },
-    { label: 'Rapport', href: `/dashboard/projects/${projectId}/report`, icon: FileText, segment: 'report' },
-    { label: 'Paramètres', href: `/dashboard/projects/${projectId}/settings`, icon: Settings, segment: 'settings' },
+    { label: 'Aperçu', href: `/projects/${projectId}`, icon: LayoutDashboard, segment: null },
+    { label: 'Photos', href: `/projects/${projectId}/photos`, icon: Camera, segment: 'photos' },
+    { label: 'Mesures', href: `/projects/${projectId}/measurements`, icon: Ruler, segment: 'measurements' },
+    { label: 'Estimation', href: `/projects/${projectId}/estimate`, icon: Calculator, segment: 'estimate' },
+    { label: 'Tâches', href: `/projects/${projectId}/tasks`, icon: CheckSquare, segment: 'tasks' },
+    { label: 'Design', href: `/projects/${projectId}/design`, icon: Palette, segment: 'design' },
+    { label: 'Modèle 3D', href: `/projects/${projectId}/model`, icon: Box, segment: 'model' },
+    { label: 'Rapport', href: `/projects/${projectId}/report`, icon: FileText, segment: 'report' },
+    { label: 'Paramètres', href: `/projects/${projectId}/settings`, icon: Settings, segment: 'settings' },
   ]
 
   return (
@@ -119,6 +120,8 @@ export default async function ProjectLayout({ children, params }: Props) {
                 <p className="mt-0.5 truncate text-sm text-gray-500">{address}</p>
               )}
             </div>
+
+            <ProjectHeaderActions projectId={projectId} projectTitle={project.title} />
           </div>
 
           {/* Tab Navigation — client component for active-state detection */}

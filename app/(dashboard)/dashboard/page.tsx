@@ -100,7 +100,7 @@ export function DashboardSkeleton() {
 function ProjectRow({ project }: { project: Project }) {
   return (
     <Link
-      href={`/dashboard/projects/${project.id}`}
+      href={`/projects/${project.id}`}
       className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group"
     >
       <div className="min-w-0 flex-1">
@@ -205,7 +205,7 @@ async function DashboardContent() {
             Voici un aperçu de vos projets de mesure.
           </p>
         </div>
-        <Link href="/dashboard/projects/new">
+        <Link href="/projects/new">
           <Button size="md" className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
             Nouveau projet
@@ -258,7 +258,7 @@ async function DashboardContent() {
           <div className="flex items-center justify-between">
             <CardTitle>Projets récents</CardTitle>
             <Link
-              href="/dashboard/projects"
+              href="/projects"
               className="text-sm text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             >
               Voir tous
@@ -281,7 +281,7 @@ async function DashboardContent() {
               <p className="text-xs text-neutral-500 mt-1 mb-4">
                 Créez votre premier projet pour commencer.
               </p>
-              <Link href="/dashboard/projects/new">
+              <Link href="/projects/new">
                 <Button size="sm" className="gap-2">
                   <Plus className="h-3.5 w-3.5" />
                   Nouveau projet

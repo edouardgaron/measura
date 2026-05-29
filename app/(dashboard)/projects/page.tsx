@@ -24,7 +24,7 @@ import {
 import { formatDate } from '@/lib/utils/format'
 import type { Project, ProjectStatus } from '@/lib/supabase/types'
 
-// ─── Status filter labels ─────────────────────────────────────────────────────
+// --- Status filter labels -----------------------------------------------------
 
 const STATUS_LABELS: Record<ProjectStatus | 'all', string> = {
   all: 'Tous',
@@ -36,7 +36,7 @@ const STATUS_LABELS: Record<ProjectStatus | 'all', string> = {
   archived: 'Archivé',
 }
 
-// ─── Building type labels ─────────────────────────────────────────────────────
+// --- Building type labels -----------------------------------------------------
 
 const BUILDING_TYPE_LABELS: Record<string, string> = {
   residential: 'Résidentiel',
@@ -44,7 +44,7 @@ const BUILDING_TYPE_LABELS: Record<string, string> = {
   industrial: 'Industriel',
 }
 
-// ─── Project card ─────────────────────────────────────────────────────────────
+// --- Project card -------------------------------------------------------------
 
 function ProjectCard({ project }: { project: Project }) {
   const address = [project.address_city, project.address_province]
@@ -59,7 +59,7 @@ function ProjectCard({ project }: { project: Project }) {
         {/* Top row: title + actions menu */}
         <div className="flex items-start justify-between gap-2">
           <Link
-            href={`/dashboard/projects/${project.id}`}
+            href={`/projects/${project.id}`}
             className="flex-1 min-w-0 group"
           >
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug">
@@ -79,7 +79,7 @@ function ProjectCard({ project }: { project: Project }) {
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/dashboard/projects/${project.id}`}
+                  href={`/projects/${project.id}`}
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Eye className="h-4 w-4" />
@@ -88,7 +88,7 @@ function ProjectCard({ project }: { project: Project }) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/dashboard/projects/${project.id}/edit`}
+                  href={`/projects/${project.id}/edit`}
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Pencil className="h-4 w-4" />
@@ -127,7 +127,7 @@ function ProjectCard({ project }: { project: Project }) {
   )
 }
 
-// ─── Status filter bar (client island) ───────────────────────────────────────
+// --- Status filter bar (client island) ---------------------------------------
 // Since this is a server page, filters are passed via searchParams.
 
 interface FilterBarProps {
@@ -157,7 +157,7 @@ function FilterBar({ currentStatus, counts }: FilterBarProps) {
         return (
           <Link
             key={status}
-            href={status === 'all' ? '/dashboard/projects' : `/dashboard/projects?status=${status}`}
+            href={status === 'all' ? '/projects' : `/projects?status=${status}`}
             aria-current={isActive ? 'true' : undefined}
             className={[
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
@@ -184,7 +184,7 @@ function FilterBar({ currentStatus, counts }: FilterBarProps) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 interface ProjectsPageProps {
   searchParams: Promise<{ status?: string }>
@@ -238,7 +238,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             {allProjects?.length ?? 0} projet{(allProjects?.length ?? 0) !== 1 ? 's' : ''} au total
           </p>
         </div>
-        <Link href="/dashboard/projects/new">
+        <Link href="/projects/new">
           <Button size="md" className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
             Nouveau projet
@@ -269,7 +269,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
               ? 'Créez votre premier projet pour commencer à prendre des mesures.'
               : 'Essayez un autre filtre ou créez un nouveau projet.'}
           </p>
-          <Link href="/dashboard/projects/new">
+          <Link href="/projects/new">
             <Button size="sm" className="gap-2">
               <Plus className="h-3.5 w-3.5" />
               Nouveau projet
