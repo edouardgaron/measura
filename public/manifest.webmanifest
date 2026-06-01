@@ -1,0 +1,20 @@
+{
+  "name": "Measura — Gestion construction",
+  "short_name": "Measura",
+  "description": "Plateforme tout-en-un pour entrepreneurs en construction : CRM, mesures, soumissions, chantiers, facturation.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f9fafb",
+  "theme_color": "#1e3a5f",
+  "lang": "fr-CA",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

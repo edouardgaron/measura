@@ -16,6 +16,10 @@ import {
   Palette,
   FileSignature,
   ClipboardList,
+  HardHat,
+  Hammer,
+  DollarSign,
+  Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { ProjectStatus, UnitSystem } from '@/lib/supabase/types'
@@ -84,6 +88,16 @@ export default async function ProjectOverviewPage({ params }: Props) {
     .limit(1)
     .maybeSingle()
 
+  const { count: workOrdersTotal } = await supabase
+    .from('work_orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+
+  const { count: dailyReportsTotal } = await supabase
+    .from('daily_reports')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+
   const photos = (project.photos as { id: string; storage_path: string; facade_label: string | null; sort_order: number }[] | null) ?? []
   const members = (project.members as { id: string; email: string; role: string; invite_accepted_at: string | null }[] | null) ?? []
   const photoCount = photos.length
@@ -92,6 +106,8 @@ export default async function ProjectOverviewPage({ params }: Props) {
 
   const tasksCount = tasksTotal ?? 0
   const tasksDoneCount = tasksDone ?? 0
+  const workOrderCount = workOrdersTotal ?? 0
+  const dailyReportCount = dailyReportsTotal ?? 0
 
   const clientMember = members.find((m) => m.role === 'client')
 
@@ -186,6 +202,20 @@ export default async function ProjectOverviewPage({ params }: Props) {
             badge={estimateData ? estimateData.status : undefined}
           />
           <ProgressItem
+            icon={<HardHat className="h-5 w-5" />}
+            label="Bons de travail"
+            value={workOrderCount}
+            href={`/projects/${projectId}/work-orders`}
+            color="orange"
+          />
+          <ProgressItem
+            icon={<Hammer className="h-5 w-5" />}
+            label="Rapports chantier"
+            value={dailyReportCount}
+            href={`/projects/${projectId}/site`}
+            color="teal"
+          />
+          <ProgressItem
             icon={<CheckSquare className="h-5 w-5" />}
             label="Tâches"
             value={tasksDoneCount}
@@ -249,6 +279,20 @@ export default async function ProjectOverviewPage({ params }: Props) {
           color="orange"
         />
         <QuickAction
+          href={`/projects/${projectId}/work-orders`}
+          icon={<HardHat className="h-5 w-5" />}
+          label="Bon de travail"
+          description="Générer le bon de travail du chantier"
+          color="orange"
+        />
+        <QuickAction
+          href={`/projects/${projectId}/site`}
+          icon={<Hammer className="h-5 w-5" />}
+          label="Gérer le chantier"
+          description="Rapports journaliers, pointage, problèmes, livraisons"
+          color="teal"
+        />
+        <QuickAction
           href={`/projects/${projectId}/tasks`}
           icon={<CheckSquare className="h-5 w-5" />}
           label="Gérer tâches"
@@ -261,6 +305,20 @@ export default async function ProjectOverviewPage({ params }: Props) {
           label="Choisir couleurs"
           description="Visualiser les matériaux et couleurs"
           color="pink"
+        />
+        <QuickAction
+          href={`/projects/${projectId}/profitability`}
+          icon={<DollarSign className="h-5 w-5" />}
+          label="Voir la rentabilité"
+          description="Profit réel vs prévu, marges et alertes"
+          color="green"
+        />
+        <QuickAction
+          href={`/projects/${projectId}/invoices`}
+          icon={<Receipt className="h-5 w-5" />}
+          label="Facturer"
+          description="Créer une facture et encaisser le paiement"
+          color="blue"
         />
         <QuickAction
           href={`/projects/${projectId}/report`}

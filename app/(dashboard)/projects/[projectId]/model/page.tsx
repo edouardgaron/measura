@@ -6,6 +6,8 @@ import { Loader2, Save, Box } from 'lucide-react'
 import type { RoofType, Measurement, HouseModel } from '@/lib/supabase/types'
 import dynamic from 'next/dynamic'
 
+const ReconstructPanel = dynamic(() => import('@/components/model3d/ReconstructPanel'), { ssr: false })
+
 // Dynamically import the canvas component to avoid SSR issues with WebGL
 const ModelViewer = dynamic(() => import('@/components/model3d/ModelViewer'), {
   ssr: false,
@@ -209,6 +211,8 @@ export default function ModelPage({ params }: Props) {
           Sauvegarder le modèle
         </button>
       </div>
+
+      <ReconstructPanel projectId={projectId} />
 
       {saveSuccess && (
         <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">

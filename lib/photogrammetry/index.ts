@@ -22,4 +22,5 @@ export interface PhotoTo3DProvider {
 }
 
 export { ManualParametricProvider } from './providers/manual'
-export { MockAIProvider } from './providers/mock-ai'
+// Provider mock retiré — reconstruction réelle : lib/photogrammetry/reconstruct.ts (paramétrique)
+// + lib/photogrammetry/providers/external.ts (dense).

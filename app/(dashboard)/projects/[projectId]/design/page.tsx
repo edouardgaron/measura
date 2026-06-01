@@ -37,6 +37,8 @@ const ModelViewer = dynamic(() => import('@/components/model3d/ModelViewer'), {
   ),
 })
 
+const DesignExtras = dynamic(() => import('@/components/model3d/DesignExtras'), { ssr: false })
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DesignColors {
@@ -412,6 +414,8 @@ export default function DesignPage({ params }: Props) {
               Les couleurs Portes et Fenêtres sont visibles sur le modèle complet.
               Cliquez sur «&nbsp;Sauvegarder ce design&nbsp;» pour conserver vos choix.
             </p>
+
+            <DesignExtras roofType={roofType} colors={viewerColors} />
           </div>
         </div>
       )}
