@@ -1,0 +1,5 @@
+# Force l'installation des devDependencies (Tailwind, TypeScript, types…)
+# nécessaires à `next build`, même quand NODE_ENV=production (où npm ci
+# les omettrait par défaut sur Railway).
+[phases.install]
+cmds = ["npm ci --include=dev"]
