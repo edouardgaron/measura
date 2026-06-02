@@ -48,6 +48,7 @@ export default function ElevationsPage({ params }: Props) {
   const [dims, setDims] = useState({ width: 0, depth: 0, wallHeight: 9, imperial: true })
   const [roofType, setRoofType] = useState<string | null>('gable')
   const [detecting, setDetecting] = useState<Side | 'all' | null>(null)
+  const [estimating, setEstimating] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -185,6 +186,24 @@ export default function ElevationsPage({ params }: Props) {
     }
   }
 
+  // Estimation complète du bâtiment (dimensions + toit + murs + ouvertures) depuis les photos.
+  const estimateFromPhotos = async () => {
+    setEstimating(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/estimate-from-photos`, { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`)
+      if (body.error) { flash(body.error); return }
+      flash(`Bâtiment estimé : ${fmt(body.dimensions?.width ?? 0, dims.imperial)} × ${fmt(body.dimensions?.depth ?? 0, dims.imperial)} · ${body.openings ?? 0} ouverture(s)`)
+      await load()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setEstimating(false)
+    }
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-neutral-400" /></div>
   }
@@ -199,14 +218,24 @@ export default function ElevationsPage({ params }: Props) {
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Élévations</h2>
           <span className="text-sm text-neutral-400">({openings.length} ouverture{openings.length > 1 ? 's' : ''})</span>
         </div>
-        <button
-          onClick={() => detect('all')}
-          disabled={detecting !== null}
-          className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          {detecting === 'all' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          Détecter toutes les façades par IA
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={estimateFromPhotos}
+            disabled={estimating || detecting !== null}
+            className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+          >
+            {estimating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Estimer le bâtiment depuis les photos
+          </button>
+          <button
+            onClick={() => detect('all')}
+            disabled={estimating || detecting !== null}
+            className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+          >
+            {detecting === 'all' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Ouvertures seulement
+          </button>
+        </div>
       </div>
 
       {toast && (
