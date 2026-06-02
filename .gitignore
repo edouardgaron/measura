@@ -47,3 +47,6 @@ next-env.d.ts
 
 # ── Deployment ────────────────────────────────────────────────
 .vercel/
+
+# Artefacts de demo generes par les tests
+sample-output/

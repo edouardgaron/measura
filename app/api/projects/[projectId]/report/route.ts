@@ -116,6 +116,21 @@ export async function POST(
     }
   }
 
+  /* ── Fetch surface calculations + house model (rapport complet) ─────── */
+  const { data: surfacesData } = await supabase
+    .from('surface_calculations')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('facade_side', { ascending: true })
+
+  const { data: houseModelData } = await supabase
+    .from('house_models')
+    .select('footprint_json, roof_type, wall_height')
+    .eq('project_id', projectId)
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   /* ── Determine report version ───────────────────────────────────────── */
   const { count: reportCount } = await supabase
     .from('reports')
@@ -132,6 +147,9 @@ export async function POST(
         project: project as unknown as Project,
         measurements,
         photos,
+        surfaces: (surfacesData ?? []) as never,
+        houseModel: (houseModelData ?? null) as never,
+        propertyId: String(project.id).replace(/-/g, '').slice(0, 8).toUpperCase(),
         companyName,
         companyLogo,
         locale,
