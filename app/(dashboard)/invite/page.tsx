@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, X, CheckCircle2 } from 'lucide-react'
 
 const FIELD =
-  'h-12 w-full rounded-xl border border-transparent bg-neutral-100 px-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900'
+  'h-12 w-full rounded-xl border border-transparent bg-neutral-100 px-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:bg-neutral-900 dark:focus-visible:ring-neutral-100'
 
 export default function InvitePage() {
   const router = useRouter()
@@ -88,23 +88,23 @@ export default function InvitePage() {
   if (done) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center py-24 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
           <CheckCircle2 className="h-7 w-7" />
         </div>
-        <h1 className="text-xl font-bold text-neutral-900">Invitation envoyée</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Invitation envoyée</h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
           {form.recipientName || form.email} recevra un lien pour capturer la propriété.
         </p>
         <div className="mt-6 flex gap-3">
           <button
             onClick={() => router.push(`/projects/${done.projectId}`)}
-            className="inline-flex h-11 items-center rounded-full bg-neutral-900 px-5 text-sm font-medium text-white hover:bg-neutral-800"
+            className="inline-flex h-11 items-center rounded-full bg-neutral-900 px-5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
           >
             Voir le projet
           </button>
           <button
             onClick={() => router.push('/projects')}
-            className="inline-flex h-11 items-center rounded-full bg-neutral-100 px-5 text-sm font-medium text-neutral-800 hover:bg-neutral-200"
+            className="inline-flex h-11 items-center rounded-full bg-neutral-100 px-5 text-sm font-medium text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
           >
             Tous les projets
           </button>
@@ -118,7 +118,7 @@ export default function InvitePage() {
       <button
         onClick={() => router.back()}
         aria-label="Fermer"
-        className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100"
+        className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
       >
         <X className="h-5 w-5" />
       </button>
@@ -126,10 +126,10 @@ export default function InvitePage() {
       <div className="grid gap-12 py-6 lg:grid-cols-2">
         {/* Left — intro */}
         <div className="lg:pr-8">
-          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
+          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-5xl">
             Inviter à capturer
           </h1>
-          <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-500">
+          <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
             Invitez un propriétaire ou un professionnel à capturer une propriété.
             Un texto et un courriel, avec jusqu&apos;à deux rappels, leur seront
             envoyés. En continuant, vous confirmez avoir consenti à l&apos;envoi de
@@ -147,7 +147,7 @@ export default function InvitePage() {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-500">Type de destinataire</label>
+            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Type de destinataire</label>
             <select
               className={FIELD}
               value={form.recipientType}
@@ -192,7 +192,7 @@ export default function InvitePage() {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-500">Type de livrable</label>
+            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Type de livrable</label>
             <select
               className={FIELD}
               value={form.deliverable}
@@ -211,7 +211,7 @@ export default function InvitePage() {
               onChange={(e) => update('captureNow', e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-neutral-300 accent-neutral-900"
             />
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-neutral-600 dark:text-neutral-300">
               Capturez maintenant. Payez plus tard. Enregistrez les photos
               maintenant. Commandez et payez quand vous êtes prêt.
             </span>
@@ -223,21 +223,21 @@ export default function InvitePage() {
             <button
               type="button"
               onClick={() => router.push('/projects/new')}
-              className="text-sm font-semibold text-neutral-900 hover:underline"
+              className="text-sm font-semibold text-neutral-900 hover:underline dark:text-neutral-100"
             >
               Téléverser
             </button>
             <button
               type="button"
               onClick={() => router.back()}
-              className="inline-flex h-11 items-center rounded-full border border-neutral-200 bg-white px-5 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
+              className="inline-flex h-11 items-center rounded-full border border-neutral-200 bg-white px-5 text-sm font-medium text-neutral-900 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
             >
               Annuler la demande
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Envoyer l&apos;invitation

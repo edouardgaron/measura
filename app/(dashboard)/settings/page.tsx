@@ -5,14 +5,55 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Save, User, Building2, ArrowRight } from 'lucide-react'
+import { Save, User, Building2, ArrowRight, Sun, Moon, Monitor } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from '@/components/ui/toast'
+import { useTheme, type Theme } from '@/components/theme/ThemeProvider'
 import type { Profile } from '@/lib/supabase/types'
+
+function AppearanceCard() {
+  const { theme, setTheme } = useTheme()
+  const options: { value: Theme; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { value: 'light', label: 'Clair', icon: Sun },
+    { value: 'dark', label: 'Sombre', icon: Moon },
+    { value: 'system', label: 'Système', icon: Monitor },
+  ]
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Apparence</CardTitle>
+        <CardDescription>Choisissez le thème clair, sombre ou selon votre système</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-3">
+          {options.map(({ value, label, icon: Icon }) => {
+            const active = theme === value
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                aria-pressed={active}
+                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition-colors ${
+                  active
+                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900'
+                    : 'border-neutral-200 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 const profileSchema = z.object({
   full_name: z.string().min(1, 'Le nom est requis').max(100),
@@ -82,18 +123,20 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-        <p className="text-gray-500 mt-1">Gérez votre profil et les informations de votre entreprise</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">Paramètres</h1>
+        <p className="text-gray-500 dark:text-neutral-400 mt-1">Gérez votre profil et les informations de votre entreprise</p>
       </div>
 
+      <AppearanceCard />
+
       {/* Tab buttons */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 dark:border-neutral-800">
         <button
           onClick={() => setActiveTab('profile')}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'profile'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200'
           }`}
         >
           <User className="h-4 w-4" />
@@ -104,8 +147,8 @@ export default function SettingsPage() {
             onClick={() => setActiveTab('company')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'company'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             <Building2 className="h-4 w-4" />

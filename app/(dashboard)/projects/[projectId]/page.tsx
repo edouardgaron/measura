@@ -79,21 +79,21 @@ export default async function ProjectOverviewPage({ params }: Props) {
     <div className="mx-auto max-w-6xl space-y-10 pb-10">
       {/* Hero */}
       <div className="pt-2 text-center">
-        <h2 className="text-balance text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+        <h2 className="text-balance text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-4xl">
           {project.title}
         </h2>
         {addressParts.length > 0 && (
-          <p className="mt-3 text-sm text-neutral-500">{addressParts.join(', ')}</p>
+          <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">{addressParts.join(', ')}</p>
         )}
-        <p className="mt-1 text-sm text-neutral-400">Créé le {createdDate}</p>
-        <p className="text-sm text-neutral-400">No de travail : {jobNo}</p>
+        <p className="mt-1 text-sm text-neutral-400 dark:text-neutral-500">Créé le {createdDate}</p>
+        <p className="text-sm text-neutral-400 dark:text-neutral-500">No de travail : {jobNo}</p>
       </div>
 
       {/* Three panels */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Design 2D */}
         <Panel title="Design en 2D">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-neutral-100">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
             {coverUrl ? (
               <Image
                 src={coverUrl}
@@ -103,11 +103,11 @@ export default async function ProjectOverviewPage({ params }: Props) {
                 className="object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-neutral-300">
+              <div className="flex h-full w-full items-center justify-center text-neutral-300 dark:text-neutral-600">
                 <Camera className="h-10 w-10" strokeWidth={1.25} />
               </div>
             )}
-            <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow-sm">
+            <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100">
               <Sparkles className="h-4 w-4" />
             </span>
           </div>
@@ -125,7 +125,9 @@ export default async function ProjectOverviewPage({ params }: Props) {
                 <div
                   key={i}
                   className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-xl ${
-                    url ? 'bg-neutral-100' : 'border border-dashed border-neutral-200 bg-neutral-50'
+                    url
+                      ? 'bg-neutral-100 dark:bg-neutral-800'
+                      : 'border border-dashed border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50'
                   }`}
                 >
                   {url ? (
@@ -137,7 +139,7 @@ export default async function ProjectOverviewPage({ params }: Props) {
                       className="object-cover"
                     />
                   ) : (
-                    <Home className="h-6 w-6 text-neutral-300" strokeWidth={1.25} />
+                    <Home className="h-6 w-6 text-neutral-300 dark:text-neutral-600" strokeWidth={1.25} />
                   )}
                 </div>
               )
@@ -180,14 +182,14 @@ export default async function ProjectOverviewPage({ params }: Props) {
           <div className="mt-auto flex gap-3 pt-4">
             <Link
               href={`/projects/${projectId}/model`}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
             >
               <Box className="h-4 w-4" />
               3D
             </Link>
             <Link
               href={`/projects/${projectId}/report`}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
             >
               <FileText className="h-4 w-4" />
               PDF
@@ -203,8 +205,8 @@ export default async function ProjectOverviewPage({ params }: Props) {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl bg-neutral-50 p-5">
-      <h3 className="text-center text-base font-semibold text-neutral-900">{title}</h3>
+    <section className="flex flex-col gap-4 rounded-2xl bg-neutral-50 p-5 dark:bg-neutral-900">
+      <h3 className="text-center text-base font-semibold text-neutral-900 dark:text-neutral-100">{title}</h3>
       {children}
     </section>
   )
@@ -214,7 +216,7 @@ function PanelButton({ href, children }: { href: string; children: React.ReactNo
   return (
     <Link
       href={href}
-      className="mt-auto inline-flex h-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100"
+      className="mt-auto inline-flex h-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
     >
       {children}
     </Link>
@@ -238,12 +240,14 @@ function StatTile({
     <Link
       href={href}
       className={`flex flex-col gap-1 rounded-xl p-4 transition-colors ${
-        muted ? 'bg-neutral-100 hover:bg-neutral-200' : 'bg-white hover:bg-neutral-100'
+        muted
+          ? 'bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700'
+          : 'bg-white hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700'
       }`}
     >
-      <span className="text-neutral-400">{icon}</span>
-      <span className="text-xl font-bold text-neutral-900">{value}</span>
-      <span className="text-xs text-neutral-500">{label}</span>
+      <span className="text-neutral-400 dark:text-neutral-500">{icon}</span>
+      <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">{value}</span>
+      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
     </Link>
   )
 }

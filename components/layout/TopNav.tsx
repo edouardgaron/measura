@@ -107,12 +107,12 @@ export function TopNav({ user, email = null }: TopNavProps) {
   const primary = PRIMARY_LINKS.filter((l) => allowed(l.roles, role))
 
   return (
-    <header className="sticky top-0 z-30 h-16 w-full border-b border-neutral-200/70 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-30 h-16 w-full border-b border-neutral-200/70 bg-white/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/90">
       <div className="mx-auto flex h-full max-w-[1600px] items-center gap-1 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/dashboard"
-          className="mr-4 text-xl font-extrabold tracking-tight text-neutral-900"
+          className="mr-4 text-xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100"
         >
           Measura
         </Link>
@@ -126,8 +126,8 @@ export function TopNav({ user, email = null }: TopNavProps) {
               className={cn(
                 'rounded-full px-3.5 py-2 text-sm font-medium transition-colors',
                 isActive(link.href)
-                  ? 'bg-neutral-100 text-neutral-900'
-                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                  ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
+                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
               )}
             >
               {link.label}
@@ -144,8 +144,8 @@ export function TopNav({ user, email = null }: TopNavProps) {
                   className={cn(
                     'inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors',
                     groupActive
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
+                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
                   )}
                 >
                   {group.label}
@@ -175,7 +175,7 @@ export function TopNav({ user, email = null }: TopNavProps) {
           {/* Mobile menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 hover:bg-neutral-100 md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800 md:hidden"
               aria-label="Menu"
             >
               <Menu className="h-5 w-5" />
@@ -214,8 +214,8 @@ export function TopNav({ user, email = null }: TopNavProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
               <div className="px-2 py-2">
-                <p className="truncate text-sm font-semibold text-neutral-900">{displayName}</p>
-                {email && <p className="truncate text-xs text-neutral-500">{email}</p>}
+                <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{displayName}</p>
+                {email && <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{email}</p>}
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -300,7 +300,7 @@ function NouveauMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900 px-4 text-sm font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2">
+      <DropdownMenuTrigger className="inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900 px-4 text-sm font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 dark:focus-visible:ring-neutral-100 dark:focus-visible:ring-offset-neutral-950">
         <Plus className="h-4 w-4" />
         Nouveau
       </DropdownMenuTrigger>
@@ -313,10 +313,10 @@ function NouveauMenu() {
                 href={item.href}
                 className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-3"
               >
-                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-900" />
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-900 dark:text-neutral-100" />
                 <span className="flex flex-col">
-                  <span className="text-sm font-semibold text-neutral-900">{item.title}</span>
-                  <span className="text-xs text-neutral-500">{item.desc}</span>
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{item.title}</span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{item.desc}</span>
                 </span>
               </Link>
             </DropdownMenuItem>

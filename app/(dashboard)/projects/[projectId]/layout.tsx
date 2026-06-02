@@ -95,7 +95,7 @@ export default async function ProjectLayout({ children, params }: Props) {
         <div className="flex items-center gap-3">
           <Link
             href="/projects"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
             aria-label="Retour aux projets"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -103,7 +103,7 @@ export default async function ProjectLayout({ children, params }: Props) {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-lg font-bold text-neutral-900">
+              <h1 className="truncate text-lg font-bold text-neutral-900 dark:text-neutral-100">
                 {project.title}
               </h1>
               <span
@@ -115,7 +115,7 @@ export default async function ProjectLayout({ children, params }: Props) {
               </span>
             </div>
             {address && (
-              <p className="mt-0.5 truncate text-sm text-neutral-500">{address}</p>
+              <p className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">{address}</p>
             )}
           </div>
 
@@ -123,7 +123,7 @@ export default async function ProjectLayout({ children, params }: Props) {
         </div>
 
         {/* Tab Navigation — client component for active-state detection */}
-        <div className="border-b border-neutral-200">
+        <div className="border-b border-neutral-200 dark:border-neutral-800">
           <ProjectTabNav tabs={tabs} />
         </div>
       </div>

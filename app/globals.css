@@ -55,6 +55,10 @@
   color-scheme: light;
 }
 
+.dark {
+  color-scheme: dark;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -65,8 +69,6 @@ html, body {
 
 body {
   font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
-  color: #0a0a0a;
-  background: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

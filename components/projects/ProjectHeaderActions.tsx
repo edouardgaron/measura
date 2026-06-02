@@ -529,14 +529,14 @@ export default function ProjectHeaderActions({ projectId, projectTitle }: Props)
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowExport(true)}
-          className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-200 transition-colors"
+          className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-200 transition-colors dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
         >
           <Download className="h-4 w-4" />
           Exporter
         </button>
         <button
           onClick={() => setShowShare(true)}
-          className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-200 transition-colors"
+          className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-200 transition-colors dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
         >
           <Share2 className="h-4 w-4" />
           Partager
@@ -544,7 +544,7 @@ export default function ProjectHeaderActions({ projectId, projectTitle }: Props)
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors">
+            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
