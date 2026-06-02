@@ -490,6 +490,11 @@ export default function ReportTemplate(props: ReportTemplateProps) {
           <Stat value={fmtSquares(data.roofTotalArea / 100)} label="Carrés (toiture)" />
           <Stat value={String(data.roofFacets.length)} label="Facettes" />
         </View>
+        {data.roofEstimated && (
+          <Text style={{ fontSize: 7.5, color: GREY, marginBottom: 4 }}>
+            Aire estimée à partir de l&apos;empreinte au sol et de la pente — à confirmer sur place.
+          </Text>
+        )}
 
         {data.footprint.points && data.footprint.points.length > 2 && (
           <View style={{ alignItems: 'center', marginVertical: 6 }}>

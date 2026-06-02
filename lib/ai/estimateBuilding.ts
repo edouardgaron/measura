@@ -48,6 +48,7 @@ export interface BuildingEstimate {
   roof_type: 'gable' | 'hip' | 'flat' | 'shed'
   roof_pitch: number   // x/12
   stories: number
+  confidence: number   // confiance globale 0..1
   facades: FacadeEstimate[]
   warning?: string
 }
@@ -68,12 +69,15 @@ Repère par façade (pour chaque ouverture) :
 - width, height = dimensions réelles de l'ouverture en pieds.
 - N'inclus QUE les ouvertures du rez-de-chaussée et les portes ; ignore les soupiraux/fenêtres de sous-sol et les évents de pignon.
 
+Multi-photos : plusieurs photos peuvent montrer la MÊME façade (vue de face + vue d'angle). Combine-les pour une estimation plus précise de cette façade (ne compte pas les ouvertures en double). Les vues d'angle aident à juger la profondeur (gouttereau).
+
 Réponds UNIQUEMENT avec un objet JSON valide (aucun texte, pas de Markdown) :
 {
   "width": number, "depth": number, "wall_height": number,
   "roof_type": "gable" | "hip" | "flat" | "shed",
   "roof_pitch": number,                // x/12 (0 si plat)
   "stories": number,
+  "confidence": number,                // confiance globale 0..1
   "facades": [
     {
       "facade_side": "front"|"back"|"left"|"right",
@@ -141,6 +145,12 @@ export function normalizeEstimate(raw: Record<string, unknown>): BuildingEstimat
   const depth = avg(widthsEave) || num(raw.depth, 26)
   const wall_height = num(raw.wall_height, avg(facades.map((f) => f.wall_height)) || 9)
 
+  // Confiance globale : valeur du modèle si fournie, sinon moyenne des ouvertures.
+  const opConf = facades.flatMap((f) => f.openings.map((o) => o.confidence)).filter((c): c is number => typeof c === 'number')
+  const confidence = typeof raw.confidence === 'number'
+    ? Math.max(0, Math.min(1, raw.confidence))
+    : opConf.length ? avg(opConf) : 0.7
+
   return {
     configured: true,
     width: +width.toFixed(2),
@@ -149,6 +159,7 @@ export function normalizeEstimate(raw: Record<string, unknown>): BuildingEstimat
     roof_type: (ROOFS.has(rt) ? rt : 'gable') as BuildingEstimate['roof_type'],
     roof_pitch: num(raw.roof_pitch, 6),
     stories: Math.max(1, Math.round(num(raw.stories, 1))),
+    confidence: +confidence.toFixed(2),
     facades,
   }
 }
@@ -164,12 +175,25 @@ export async function estimateBuilding(
   const usable = photos.filter((p) => SIDES.has((p.facade_side ?? '').toLowerCase()) && p.imageUrl)
   if (usable.length === 0) return emptyEstimate('Aucune photo de façade étiquetée')
 
+  // Regroupe les photos par façade (les vues multiples d'une même façade sont
+  // présentées ensemble pour une meilleure précision).
+  const order: FacadeSide[] = ['front', 'back', 'left', 'right']
+  const grouped = order
+    .map((side) => ({ side, photos: usable.filter((p) => p.facade_side.toLowerCase() === side) }))
+    .filter((g) => g.photos.length > 0)
+
   const content: Anthropic.ContentBlockParam[] = [
-    { type: 'text', text: 'Estime ce bâtiment. Chaque image est précédée de son étiquette de façade.' },
+    { type: 'text', text: 'Estime ce bâtiment à partir des photos ci-dessous, regroupées par façade.' },
   ]
-  for (const p of usable.slice(0, 12)) {
-    content.push({ type: 'text', text: `Façade: ${p.facade_side}` })
-    content.push({ type: 'image', source: { type: 'url', url: p.imageUrl } })
+  let count = 0
+  for (const g of grouped) {
+    if (count >= 12) break
+    content.push({ type: 'text', text: `=== Façade ${g.side} (${g.photos.length} photo(s)) ===` })
+    for (const p of g.photos) {
+      if (count >= 12) break
+      content.push({ type: 'image', source: { type: 'url', url: p.imageUrl } })
+      count++
+    }
   }
 
   try {
@@ -193,6 +217,6 @@ function emptyEstimate(warning: string): BuildingEstimate {
   return {
     configured: warning !== 'ANTHROPIC_API_KEY manquante',
     width: 0, depth: 0, wall_height: 9, roof_type: 'gable', roof_pitch: 6, stories: 1,
-    facades: [], warning,
+    confidence: 0, facades: [], warning,
   }
 }

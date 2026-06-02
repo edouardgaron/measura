@@ -123,13 +123,23 @@ export async function POST(
     .eq('project_id', projectId)
     .order('facade_side', { ascending: true })
 
-  const { data: houseModelData } = await supabase
+  const { data: houseModelRow } = await supabase
     .from('house_models')
-    .select('footprint_json, roof_type, wall_height')
+    .select('footprint_json, roof_type, wall_height, geometry_json')
     .eq('project_id', projectId)
     .order('generated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  // Expose la pente (estimée par IA) stockée dans geometry_json pour le rapport.
+  const houseModelData = houseModelRow
+    ? {
+        footprint_json: houseModelRow.footprint_json,
+        roof_type: houseModelRow.roof_type,
+        wall_height: houseModelRow.wall_height,
+        roof_pitch: (houseModelRow.geometry_json as { roof_pitch?: number } | null)?.roof_pitch ?? null,
+      }
+    : null
 
   /* ── Determine report version ───────────────────────────────────────── */
   const { count: reportCount } = await supabase

@@ -34,6 +34,7 @@ export interface HouseModelLike {
   roof_type: 'gable' | 'hip' | 'flat' | 'shed' | null
   wall_height: number | null
   stories?: number | null
+  roof_pitch?: number | null // x/12 (estimé par IA si pas de facettes mesurées)
 }
 
 export interface WasteRow {
@@ -74,6 +75,7 @@ export interface ReportData {
   roofTotalArea: number
   roofPitchBreakdown: { pitch: number; area: number; pct: number }[]
   roofLines: { label: string; length: number }[] // faîtes/avant-toits/rives via fascia+trim
+  roofEstimated: boolean // true si l'aire de toiture est dérivée de l'empreinte + pente (pas de surfaces mesurées)
 
   // Soffite / fascia / garnitures
   trimSurfaces: ReportSurface[]
@@ -159,10 +161,10 @@ export function buildReportData(
   const areaOf = (s: ReportSurface) => s.gross_area ?? s.net_area ?? 0
 
   const wallArea = sum(walls.map(netOf))
-  const roofArea = sum(roofs.map(areaOf))
+  let roofArea = sum(roofs.map(areaOf))
   const trimArea = sum(trims.map(areaOf))
   const openingArea = sum([...windows, ...doors].map(areaOf))
-  const totalArea = wallArea + roofArea + trimArea
+  let totalArea = wallArea + roofArea + trimArea
 
   // Aires par élévation
   const byElevation = SIDES.filter((s) => s !== 'roof' && s !== 'other')
@@ -172,13 +174,42 @@ export function buildReportData(
     }))
     .filter((e) => e.area > 0)
 
+  // Empreinte (calculée tôt — sert aussi à estimer la toiture)
+  const fpPts = houseModel?.footprint_json ?? null
+  const fpArea = fpPts && fpPts.length > 2 ? polygonArea(fpPts) : 0
+  const roofType = houseModel?.roof_type ?? null
+  const estPitch = houseModel?.roof_pitch ?? null
+
   // Toiture
-  const roofFacets = roofs.map((r, i) => ({
+  let roofFacets = roofs.map((r, i) => ({
     label: r.label ?? `RF-${i + 1}`,
     area: areaOf(r),
     pitch: r.pitch,
   }))
+  let roofEstimated = false
+
+  // Aucune surface de toit mesurée → estimer l'aire depuis l'empreinte + la pente.
+  // Aire de versant = aire au sol × facteur de pente (√(1 + (pente/12)²)).
+  if (roofFacets.length === 0 && fpArea > 0 && roofType && roofType !== 'flat') {
+    const p = estPitch ?? 6
+    const slope = Math.sqrt(1 + (p / 12) ** 2)
+    const total = fpArea * slope
+    roofFacets = [
+      { label: 'Versant 1', area: total / 2, pitch: p },
+      { label: 'Versant 2', area: total / 2, pitch: p },
+    ]
+    roofEstimated = true
+  } else if (roofFacets.length === 0 && fpArea > 0 && roofType === 'flat') {
+    roofFacets = [{ label: 'Toit plat', area: fpArea, pitch: 0 }]
+    roofEstimated = true
+  }
+
   const roofTotalArea = sum(roofFacets.map((f) => f.area))
+  // Si la toiture est estimée (pas de surfaces mesurées), l'intégrer au sommaire.
+  if (roofEstimated) {
+    roofArea = roofTotalArea
+    totalArea = wallArea + roofArea + trimArea
+  }
   const pitchMap = new Map<number, number>()
   for (const f of roofFacets) {
     const p = f.pitch ?? 0
@@ -216,7 +247,7 @@ export function buildReportData(
   const width = xs2.length ? Math.max(...xs2) - Math.min(...xs2) : 0
   const depth = ys2.length ? Math.max(...ys2) - Math.min(...ys2) : 0
   const wallHeight = houseModel?.wall_height ?? (imperial ? 9 : 2.7)
-  const pitch = roofPitchBreakdown[0]?.pitch ?? (footprint.roofType === 'flat' ? 0 : 6)
+  const pitch = roofPitchBreakdown[0]?.pitch ?? estPitch ?? (footprint.roofType === 'flat' ? 0 : 6)
   const dims = { width, depth, wallHeight, pitch }
 
   // Ouvertures par élévation, triées de gauche à droite quand la position
@@ -256,6 +287,7 @@ export function buildReportData(
     roofTotalArea,
     roofPitchBreakdown,
     roofLines,
+    roofEstimated,
     trimSurfaces: trims,
     sidingWaste,
     roofWaste,

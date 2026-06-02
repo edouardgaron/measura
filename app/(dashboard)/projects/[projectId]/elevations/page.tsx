@@ -26,6 +26,7 @@ const SIDES: { side: Side; label: string }[] = [
   { side: 'left', label: 'Gauche' },
 ]
 const TYPE_LABELS: Record<OpeningType, string> = { window: 'Fenêtre', door: 'Porte', garage: 'Garage' }
+const ROOF_LABELS: Record<string, string> = { gable: 'pignon', hip: 'croupe', flat: 'plat', shed: 'appentis' }
 
 interface Opening {
   id: string
@@ -47,6 +48,8 @@ export default function ElevationsPage({ params }: Props) {
   const [openings, setOpenings] = useState<Opening[]>([])
   const [dims, setDims] = useState({ width: 0, depth: 0, wallHeight: 9, imperial: true })
   const [roofType, setRoofType] = useState<string | null>('gable')
+  const [roofPitch, setRoofPitch] = useState<number>(6)
+  const [estimate, setEstimate] = useState<{ pitch?: number; confidence?: number; photosUsed?: number } | null>(null)
   const [detecting, setDetecting] = useState<Side | 'all' | null>(null)
   const [estimating, setEstimating] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -58,18 +61,24 @@ export default function ElevationsPage({ params }: Props) {
       const supabase = createClient()
       const [{ data: surfaces }, { data: house }, { data: project }] = await Promise.all([
         supabase.from('surface_calculations').select('*').eq('project_id', projectId),
-        supabase.from('house_models').select('footprint_json, roof_type, wall_height')
+        supabase.from('house_models').select('footprint_json, roof_type, wall_height, geometry_json')
           .eq('project_id', projectId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('projects').select('unit_system').eq('id', projectId).single(),
       ])
 
-      const data = buildReportData(
-        (surfaces as ReportSurface[]) ?? [],
-        (house as HouseModelLike | null) ?? null,
-      )
+      const geo = (house?.geometry_json ?? null) as { method?: string; roof_pitch?: number; confidence?: number; photos_used?: number } | null
+      const houseModel = house
+        ? ({ footprint_json: house.footprint_json, roof_type: house.roof_type, wall_height: house.wall_height, roof_pitch: geo?.roof_pitch ?? null } as HouseModelLike)
+        : null
+
+      const data = buildReportData((surfaces as ReportSurface[]) ?? [], houseModel)
       const imperial = project?.unit_system !== 'metric'
       setDims({ width: data.dims.width, depth: data.dims.depth, wallHeight: data.dims.wallHeight, imperial })
       setRoofType(data.footprint.roofType)
+      setRoofPitch(data.dims.pitch)
+      setEstimate(geo?.method === 'ai-photo-estimate'
+        ? { pitch: geo.roof_pitch ?? data.dims.pitch, confidence: geo.confidence, photosUsed: geo.photos_used }
+        : null)
 
       const ops: Opening[] = ((surfaces as ReportSurface[]) ?? [])
         .filter((s) => ['window', 'door', 'garage'].includes(s.surface_type ?? '') &&
@@ -249,11 +258,33 @@ export default function ElevationsPage({ params }: Props) {
         </div>
       )}
 
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-        Dimensions estimées : largeur {fmt(dims.width, dims.imperial)} · profondeur {fmt(dims.depth, dims.imperial)} ·
-        hauteur de mur {fmt(dims.wallHeight, dims.imperial)}.
-        {noDims && ' ⚠ Aucune dimension : ajoutez des surfaces de mur ou générez le modèle 3D pour caler l\'échelle.'}
-        {' '}La détection IA requiert une photo étiquetée par façade.
+      <div className="space-y-2">
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
+          Dimensions estimées : largeur {fmt(dims.width, dims.imperial)} · profondeur {fmt(dims.depth, dims.imperial)} ·
+          hauteur de mur {fmt(dims.wallHeight, dims.imperial)} · toit {ROOF_LABELS[roofType ?? 'gable'] ?? roofType}
+          {roofType !== 'flat' && ` ${Math.round(roofPitch)}/12`}.
+          {noDims && ' ⚠ Aucune dimension : utilisez « Estimer le bâtiment depuis les photos » ou ajoutez des surfaces de mur.'}
+          {' '}La détection IA requiert une photo étiquetée par façade.
+        </div>
+        {estimate && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 font-medium text-white dark:bg-neutral-100 dark:text-neutral-900">
+              <Sparkles className="h-3 w-3" /> Estimé par IA depuis les photos
+            </span>
+            {typeof estimate.photosUsed === 'number' && (
+              <span className="text-neutral-500 dark:text-neutral-400">{estimate.photosUsed} photo(s) analysée(s)</span>
+            )}
+            {typeof estimate.confidence === 'number' && (
+              <span className={`rounded-full px-2 py-0.5 font-medium ${
+                estimate.confidence >= 0.75 ? 'bg-green-100 text-green-700'
+                : estimate.confidence >= 0.5 ? 'bg-amber-100 text-amber-700'
+                : 'bg-red-100 text-red-700'}`}>
+                confiance {(estimate.confidence * 100).toFixed(0)} %
+              </span>
+            )}
+            <span className="text-neutral-400">— vérifiez et ajustez les mesures au besoin</span>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

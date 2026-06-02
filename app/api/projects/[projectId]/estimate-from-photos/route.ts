@@ -61,7 +61,12 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   const footprint: [number, number][] = [[0, 0], [est.width, 0], [est.width, est.depth], [0, est.depth]]
   await supabase.from('house_models').insert({
     project_id: projectId,
-    geometry_json: { method: 'ai-photo-estimate', width: est.width, depth: est.depth, wall_height: est.wall_height, roof_pitch: est.roof_pitch },
+    geometry_json: {
+      method: 'ai-photo-estimate',
+      width: est.width, depth: est.depth, wall_height: est.wall_height,
+      roof_pitch: est.roof_pitch, confidence: est.confidence,
+      photos_used: imgs.length,
+    },
     roof_type: est.roof_type,
     wall_height: est.wall_height,
     footprint_json: footprint,
@@ -110,6 +115,8 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   return NextResponse.json({
     dimensions: { width: est.width, depth: est.depth, wall_height: est.wall_height, unit },
     roof: { type: est.roof_type, pitch: est.roof_pitch },
+    confidence: est.confidence,
+    photosUsed: imgs.length,
     facades: est.facades.map((f) => ({ side: f.facade_side, wall_width: f.wall_width, openings: f.openings.length })),
     walls: wallRows.length,
     openings: persisted.count,
