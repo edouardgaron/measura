@@ -58,6 +58,14 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   }
 
   // ── house_models (footprint rectangulaire + toit) ────────────────────────
+  // Purge les estimations IA précédentes (évite l'accumulation ; conserve un
+  // éventuel modèle dense/manuel d'une autre méthode).
+  await supabase.from('house_models').delete()
+    .eq('project_id', projectId).filter('geometry_json->>method', 'eq', 'ai-photo-estimate')
+
+  const facadeConfidence: Record<string, number> = {}
+  for (const f of est.facades) facadeConfidence[f.facade_side] = f.confidence
+
   const footprint: [number, number][] = [[0, 0], [est.width, 0], [est.width, est.depth], [0, est.depth]]
   await supabase.from('house_models').insert({
     project_id: projectId,
@@ -65,6 +73,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       method: 'ai-photo-estimate',
       width: est.width, depth: est.depth, wall_height: est.wall_height,
       roof_pitch: est.roof_pitch, confidence: est.confidence,
+      facade_confidence: facadeConfidence,
       photos_used: imgs.length,
     },
     roof_type: est.roof_type,
@@ -112,13 +121,21 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     projectId, userId: auth.user?.id, source: 'ai', unit, sides: SIDES, openings: placements,
   })
 
+  // Ouvertures manuelles conservées (non écrasées par la ré-estimation).
+  const { count: manualKept } = await supabase
+    .from('surface_calculations')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId).eq('detected_by', 'manual')
+    .in('surface_type', ['window', 'door', 'garage'])
+
   return NextResponse.json({
     dimensions: { width: est.width, depth: est.depth, wall_height: est.wall_height, unit },
     roof: { type: est.roof_type, pitch: est.roof_pitch },
     confidence: est.confidence,
     photosUsed: imgs.length,
-    facades: est.facades.map((f) => ({ side: f.facade_side, wall_width: f.wall_width, openings: f.openings.length })),
+    facades: est.facades.map((f) => ({ side: f.facade_side, wall_width: f.wall_width, confidence: f.confidence, openings: f.openings.length })),
     walls: wallRows.length,
     openings: persisted.count,
+    manualKept: manualKept ?? 0,
   })
 }

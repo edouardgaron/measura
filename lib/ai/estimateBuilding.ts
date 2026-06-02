@@ -37,6 +37,7 @@ export interface FacadeEstimate {
   wall_width: number
   wall_height: number
   is_gable_end: boolean
+  confidence: number
   openings: EstimatedOpening[]
 }
 
@@ -84,6 +85,7 @@ Réponds UNIQUEMENT avec un objet JSON valide (aucun texte, pas de Markdown) :
       "wall_width": number,            // largeur de CE mur en pi
       "wall_height": number,
       "is_gable_end": boolean,         // true si ce mur est un pignon (triangle de toit)
+      "confidence": number,            // confiance pour CETTE façade (0..1, selon la qualité/angle des photos)
       "openings": [
         { "type":"window"|"door"|"garage", "position_x":number, "sill_height":number,
           "width":number, "height":number, "confidence":number }
@@ -128,11 +130,17 @@ export function normalizeEstimate(raw: Record<string, unknown>): BuildingEstimat
         confidence: typeof o.confidence === 'number' ? o.confidence : undefined,
       })
     }
+    // Confiance par façade : valeur du modèle, sinon moyenne de ses ouvertures, sinon 0.7.
+    const opC = openings.map((o) => o.confidence).filter((c): c is number => typeof c === 'number')
+    const fConf = typeof f.confidence === 'number'
+      ? Math.max(0, Math.min(1, f.confidence))
+      : opC.length ? opC.reduce((a, b) => a + b, 0) / opC.length : 0.7
     facades.push({
       facade_side: side as FacadeSide,
       wall_width: num(f.wall_width),
       wall_height: num(f.wall_height, num(raw.wall_height, 9)),
       is_gable_end: Boolean(f.is_gable_end ?? (side === 'front' || side === 'back')),
+      confidence: +fConf.toFixed(2),
       openings,
     })
   }

@@ -10,7 +10,7 @@
 'use client'
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
-import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info } from 'lucide-react'
+import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info, Box } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { buildReportData, type ReportSurface, type HouseModelLike } from '@/lib/report/buildReportData'
 
@@ -50,8 +50,10 @@ export default function ElevationsPage({ params }: Props) {
   const [roofType, setRoofType] = useState<string | null>('gable')
   const [roofPitch, setRoofPitch] = useState<number>(6)
   const [estimate, setEstimate] = useState<{ pitch?: number; confidence?: number; photosUsed?: number } | null>(null)
+  const [facadeConf, setFacadeConf] = useState<Record<string, number>>({})
   const [detecting, setDetecting] = useState<Side | 'all' | null>(null)
   const [estimating, setEstimating] = useState(false)
+  const [building3d, setBuilding3d] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -66,7 +68,7 @@ export default function ElevationsPage({ params }: Props) {
         supabase.from('projects').select('unit_system').eq('id', projectId).single(),
       ])
 
-      const geo = (house?.geometry_json ?? null) as { method?: string; roof_pitch?: number; confidence?: number; photos_used?: number } | null
+      const geo = (house?.geometry_json ?? null) as { method?: string; roof_pitch?: number; confidence?: number; photos_used?: number; facade_confidence?: Record<string, number> } | null
       const houseModel = house
         ? ({ footprint_json: house.footprint_json, roof_type: house.roof_type, wall_height: house.wall_height, roof_pitch: geo?.roof_pitch ?? null } as HouseModelLike)
         : null
@@ -79,6 +81,7 @@ export default function ElevationsPage({ params }: Props) {
       setEstimate(geo?.method === 'ai-photo-estimate'
         ? { pitch: geo.roof_pitch ?? data.dims.pitch, confidence: geo.confidence, photosUsed: geo.photos_used }
         : null)
+      setFacadeConf(geo?.facade_confidence ?? {})
 
       const ops: Opening[] = ((surfaces as ReportSurface[]) ?? [])
         .filter((s) => ['window', 'door', 'garage'].includes(s.surface_type ?? '') &&
@@ -110,13 +113,15 @@ export default function ElevationsPage({ params }: Props) {
   // ── Persistance d'une ouverture (update champs position/dimensions) ─────────
   const persist = useCallback(async (op: Opening) => {
     const supabase = createClient()
+    // Toute édition/déplacement promeut l'ouverture en « manuel » → elle est
+    // préservée lors d'une ré-estimation par IA (qui ne remplace que les 'ai').
     await supabase.from('surface_calculations').update({
       position_x: op.position_x,
       sill_height: op.sill_height,
       length: op.length,
       height: op.height,
       gross_area: +(op.length * op.height).toFixed(3),
-      detected_by: op.detected_by ?? 'manual',
+      detected_by: 'manual',
       updated_at: new Date().toISOString(),
     }).eq('id', op.id)
   }, [])
@@ -204,12 +209,32 @@ export default function ElevationsPage({ params }: Props) {
       const body = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`)
       if (body.error) { flash(body.error); return }
-      flash(`Bâtiment estimé : ${fmt(body.dimensions?.width ?? 0, dims.imperial)} × ${fmt(body.dimensions?.depth ?? 0, dims.imperial)} · ${body.openings ?? 0} ouverture(s)`)
+      const kept = body.manualKept ? ` · ${body.manualKept} manuelle(s) conservée(s)` : ''
+      flash(`Bâtiment estimé : ${fmt(body.dimensions?.width ?? 0, dims.imperial)} × ${fmt(body.dimensions?.depth ?? 0, dims.imperial)} · ${body.openings ?? 0} ouverture(s)${kept}`)
       await load()
     } catch (err) {
       setError((err as Error).message)
     } finally {
       setEstimating(false)
+    }
+  }
+
+  // Génère le modèle 3D paramétrique à partir des dimensions estimées.
+  const generate3D = async () => {
+    setBuilding3d(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/reconstruct`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'parametric' }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`)
+      flash('Modèle 3D généré depuis les dimensions estimées — voir l’onglet Modèle 3D.')
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBuilding3d(false)
     }
   }
 
@@ -230,15 +255,25 @@ export default function ElevationsPage({ params }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={estimateFromPhotos}
-            disabled={estimating || detecting !== null}
+            disabled={estimating || detecting !== null || building3d}
             className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
           >
             {estimating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Estimer le bâtiment depuis les photos
+            {estimate ? 'Ré-estimer depuis les photos' : 'Estimer le bâtiment depuis les photos'}
           </button>
+          {estimate && (
+            <button
+              onClick={generate3D}
+              disabled={building3d || estimating || detecting !== null}
+              className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+            >
+              {building3d ? <Loader2 className="h-4 w-4 animate-spin" /> : <Box className="h-4 w-4" />}
+              Générer le modèle 3D
+            </button>
+          )}
           <button
             onClick={() => detect('all')}
-            disabled={estimating || detecting !== null}
+            disabled={estimating || detecting !== null || building3d}
             className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
           >
             {detecting === 'all' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -298,6 +333,7 @@ export default function ElevationsPage({ params }: Props) {
             imperial={dims.imperial}
             roofType={roofType}
             isGableEnd={side === 'front' || side === 'back'}
+            confidence={facadeConf[side]}
             openings={openings.filter((o) => o.facade_side === side)}
             detecting={detecting === side}
             disabledDetect={detecting !== null}
@@ -327,7 +363,7 @@ function fmt(ft: number, imperial: boolean): string {
 
 // ── Panneau d'une façade ───────────────────────────────────────────────────────
 function FacadePanel({
-  side, label, widthFt, wallHeightFt, imperial, roofType, isGableEnd, openings,
+  side, label, widthFt, wallHeightFt, imperial, roofType, isGableEnd, confidence, openings,
   detecting, disabledDetect, onDetect, onAdd, onDragLocal, onDragCommit, onFieldCommit, onDelete,
 }: {
   side: Side
@@ -337,6 +373,7 @@ function FacadePanel({
   imperial: boolean
   roofType: string | null
   isGableEnd: boolean
+  confidence?: number
   openings: Opening[]
   detecting: boolean
   disabledDetect: boolean
@@ -405,7 +442,7 @@ function FacadePanel({
     if (!drag.current) return
     const o = openings.find((op) => op.id === drag.current!.id)
     drag.current = null
-    if (o) onDragCommit(o.id, { position_x: o.position_x, sill_height: o.sill_height, detected_by: o.detected_by ?? 'manual' })
+    if (o) onDragCommit(o.id, { position_x: o.position_x, sill_height: o.sill_height, detected_by: 'manual' })
   }
 
   const placedCount = openings.filter((o) => o.position_x != null && o.sill_height != null).length
@@ -414,7 +451,17 @@ function FacadePanel({
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{label}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{label}</h3>
+            {typeof confidence === 'number' && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                confidence >= 0.75 ? 'bg-green-100 text-green-700'
+                : confidence >= 0.5 ? 'bg-amber-100 text-amber-700'
+                : 'bg-red-100 text-red-700'}`}>
+                IA {(confidence * 100).toFixed(0)} %
+              </span>
+            )}
+          </div>
           <p className="text-xs text-neutral-400">
             {openings.length === 0 ? 'Aucune ouverture' :
               placedCount === openings.length ? 'positions réelles' : `${placedCount}/${openings.length} positionnée(s)`}
@@ -499,10 +546,10 @@ function FacadePanel({
                 <span className="font-medium">{o.label ?? TYPE_LABELS[o.surface_type]}</span>
                 {o.detected_by === 'ai' && <span className="rounded bg-neutral-900 px-1 py-0.5 text-[9px] text-white dark:bg-neutral-100 dark:text-neutral-900">IA</span>}
               </span>
-              <NumCell value={o.position_x} onCommit={(v) => onFieldCommit(o.id, { position_x: v, detected_by: o.detected_by ?? 'manual' })} />
-              <NumCell value={o.sill_height} onCommit={(v) => onFieldCommit(o.id, { sill_height: v, detected_by: o.detected_by ?? 'manual' })} />
-              <NumCell value={o.length} onCommit={(v) => onFieldCommit(o.id, { length: v ?? o.length })} />
-              <NumCell value={o.height} onCommit={(v) => onFieldCommit(o.id, { height: v ?? o.height })} />
+              <NumCell value={o.position_x} onCommit={(v) => onFieldCommit(o.id, { position_x: v, detected_by: 'manual' })} />
+              <NumCell value={o.sill_height} onCommit={(v) => onFieldCommit(o.id, { sill_height: v, detected_by: 'manual' })} />
+              <NumCell value={o.length} onCommit={(v) => onFieldCommit(o.id, { length: v ?? o.length, detected_by: 'manual' })} />
+              <NumCell value={o.height} onCommit={(v) => onFieldCommit(o.id, { height: v ?? o.height, detected_by: 'manual' })} />
               <button onClick={() => onDelete(o.id)} className="rounded p-1 text-neutral-400 hover:bg-red-50 hover:text-red-600">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
