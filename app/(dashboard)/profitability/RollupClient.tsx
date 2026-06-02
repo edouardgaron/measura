@@ -65,21 +65,21 @@ export default function RollupClient() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <DollarSign className="h-6 w-6 text-emerald-600" />
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            <DollarSign className="h-6 w-6 text-neutral-900 dark:text-neutral-100" />
             Rentabilité — tous les chantiers
           </h1>
-          <p className="text-sm text-gray-500">Vue d&apos;ensemble des profits réels par chantier.</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Vue d&apos;ensemble des profits réels par chantier.</p>
         </div>
-        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-2 text-sm text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700">
           <RefreshCw className="h-4 w-4" /> Actualiser
         </button>
       </div>
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center text-gray-400"><Loader2 className="h-6 w-6 animate-spin" /></div>
+        <div className="flex h-48 items-center justify-center text-neutral-400 dark:text-neutral-500"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">{error}</div>
       ) : (
         <>
           {totals && (
@@ -98,13 +98,13 @@ export default function RollupClient() {
           )}
 
           {rows.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-500">
+            <div className="rounded-2xl border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
               Aucun chantier avec données financières pour le moment.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
               <table className="w-full text-sm">
-                <thead className="border-b border-gray-100 text-left text-xs uppercase tracking-wide text-gray-400">
+                <thead className="border-b border-neutral-100 text-left text-xs uppercase tracking-wide text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
                   <tr>
                     <th className="p-3">Chantier</th>
                     <th className="p-3">Revenu</th>
@@ -116,18 +116,18 @@ export default function RollupClient() {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.projectId} className="border-b border-gray-50 hover:bg-gray-50">
+                    <tr key={r.projectId} className="border-b border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50">
                       <td className="p-3">
-                        <Link href={`/projects/${r.projectId}/profitability`} className="flex items-center gap-2 font-medium text-gray-900 hover:text-emerald-700">
+                        <Link href={`/projects/${r.projectId}/profitability`} className="flex items-center gap-2 font-medium text-neutral-900 hover:underline dark:text-neutral-100">
                           <span className={`h-2 w-2 shrink-0 rounded-full ${DOT[r.alertLevel]}`} />
                           {r.title}
                         </Link>
                       </td>
-                      <td className="p-3 text-gray-700">{money(r.revenue)}</td>
-                      <td className="p-3 text-gray-700">{money(r.realCost)}</td>
-                      <td className={`p-3 font-medium ${r.realProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{money(r.realProfit)}</td>
-                      <td className="p-3 text-gray-700">{pct(r.realMarginPct)}</td>
-                      <td className="p-3 text-gray-500"><span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{r.realHours.toFixed(1)}</span></td>
+                      <td className="p-3 text-neutral-700 dark:text-neutral-300">{money(r.revenue)}</td>
+                      <td className="p-3 text-neutral-700 dark:text-neutral-300">{money(r.realCost)}</td>
+                      <td className={`p-3 font-medium ${r.realProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{money(r.realProfit)}</td>
+                      <td className="p-3 text-neutral-700 dark:text-neutral-300">{pct(r.realMarginPct)}</td>
+                      <td className="p-3 text-neutral-500 dark:text-neutral-400"><span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{r.realHours.toFixed(1)}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -149,13 +149,13 @@ function Kpi({
   icon?: React.ReactNode
 }) {
   const tones = {
-    good: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    bad: 'border-red-200 bg-red-50 text-red-700',
-    warn: 'border-amber-200 bg-amber-50 text-amber-700',
-    neutral: 'border-gray-200 bg-white text-gray-900',
+    good: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400',
+    bad: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400',
+    warn: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400',
+    neutral: 'border-neutral-200 bg-white text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100',
   }
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${tones[tone]}`}>
+    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
       <div className="mb-1 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide opacity-70">{label}</span>
         {icon}

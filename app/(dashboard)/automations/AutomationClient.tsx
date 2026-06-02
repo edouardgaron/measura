@@ -16,13 +16,13 @@ interface Props {
   smsEnabled: boolean
 }
 
-const INPUT = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+const INPUT = 'w-full rounded-xl border border-transparent bg-neutral-100 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-0 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-100'
 
 function ChannelBadge({ channel }: { channel: MessageChannel }) {
   return channel === 'email' ? (
-    <span className="inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-xs text-violet-700"><Mail className="h-3 w-3" /> Courriel</span>
+    <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-1.5 py-0.5 text-xs text-violet-700 dark:bg-violet-950/40 dark:text-violet-400"><Mail className="h-3 w-3" /> Courriel</span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded bg-teal-100 px-1.5 py-0.5 text-xs text-teal-700"><MessageSquare className="h-3 w-3" /> SMS</span>
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"><MessageSquare className="h-3 w-3" /> SMS</span>
   )
 }
 
@@ -34,23 +34,23 @@ export default function AutomationClient({ initialTemplates, initialRules, email
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
           <Zap className="h-6 w-6 text-amber-500" /> Automatisation
         </h1>
-        <p className="text-sm text-gray-500">Courriels et SMS automatiques déclenchés par l’avancement des leads.</p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">Courriels et SMS automatiques déclenchés par l’avancement des leads.</p>
       </div>
 
       {!emailEnabled && !smsEnabled && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          Aucun canal configuré. Ajoutez <code className="rounded bg-amber-100 px-1">RESEND_API_KEY</code> (courriel) et/ou les variables Twilio (SMS) pour activer les envois.
+          Aucun canal configuré. Ajoutez <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">RESEND_API_KEY</code> (courriel) et/ou les variables Twilio (SMS) pour activer les envois.
         </div>
       )}
 
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-800">
         {(['rules', 'templates'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`border-b-2 px-4 py-2.5 text-sm font-medium ${tab === t ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`border-b-2 px-4 py-2.5 text-sm font-medium ${tab === t ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100' : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'}`}>
             {t === 'rules' ? `Règles (${rules.length})` : `Modèles (${templates.length})`}
           </button>
         ))}
@@ -84,7 +84,7 @@ function TemplatesTab({
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
           <Plus className="h-4 w-4" /> Nouveau modèle
         </button>
       </div>
@@ -94,19 +94,19 @@ function TemplatesTab({
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {templates.map((t) => (
-            <div key={t.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div key={t.id} className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900">{t.name}</p>
+                  <p className="font-medium text-neutral-900 dark:text-neutral-100">{t.name}</p>
                   <div className="mt-1"><ChannelBadge channel={t.channel} /></div>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setEditing(t)} className="text-gray-400 hover:text-blue-600"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => remove(t.id)} className="text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => setEditing(t)} className="text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-100"><Pencil className="h-4 w-4" /></button>
+                  <button onClick={() => remove(t.id)} className="text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              {t.subject && <p className="mt-2 truncate text-xs font-medium text-gray-600">{t.subject}</p>}
-              <p className="mt-1 line-clamp-2 text-xs text-gray-500">{t.body}</p>
+              {t.subject && <p className="mt-2 truncate text-xs font-medium text-neutral-500 dark:text-neutral-400">{t.subject}</p>}
+              <p className="mt-1 line-clamp-2 text-xs text-neutral-500 dark:text-neutral-400">{t.body}</p>
             </div>
           ))}
         </div>
@@ -163,33 +163,33 @@ function TemplateModal({
 
   return (
     <Overlay onClose={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl dark:border-neutral-800 dark:bg-neutral-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">{template ? 'Modifier le modèle' : 'Nouveau modèle'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X className="h-5 w-5" /></button>
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{template ? 'Modifier le modèle' : 'Nouveau modèle'}</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-100"><X className="h-5 w-5" /></button>
         </div>
-        {error && <p className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+        {error && <p className="mb-3 rounded-xl bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">{error}</p>}
         <div className="space-y-3">
           <input className={INPUT} placeholder="Nom du modèle" value={name} onChange={(e) => setName(e.target.value)} />
           <div className="flex gap-2">
             <button onClick={() => setChannel('email')} disabled={!emailEnabled}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${channel === 'email' ? 'border-violet-400 bg-violet-50 text-violet-700' : 'border-gray-300 text-gray-600'} disabled:opacity-40`}>
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-sm ${channel === 'email' ? 'border-violet-400 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-400' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800 dark:text-neutral-400'} disabled:opacity-40`}>
               <Mail className="h-4 w-4" /> Courriel
             </button>
             <button onClick={() => setChannel('sms')} disabled={!smsEnabled}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${channel === 'sms' ? 'border-teal-400 bg-teal-50 text-teal-700' : 'border-gray-300 text-gray-600'} disabled:opacity-40`}>
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-sm ${channel === 'sms' ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800 dark:text-neutral-400'} disabled:opacity-40`}>
               <MessageSquare className="h-4 w-4" /> SMS
             </button>
           </div>
           {channel === 'email' && <input className={INPUT} placeholder="Objet du courriel" value={subject} onChange={(e) => setSubject(e.target.value)} />}
           <textarea rows={channel === 'sms' ? 3 : 6} className={`${INPUT} resize-y`} placeholder="Contenu du message…" value={body} onChange={(e) => setBody(e.target.value)} />
-          <div className="rounded-lg bg-gray-50 p-2 text-xs text-gray-500">
-            Variables : {AVAILABLE_VARS.map((v) => <code key={v} className="mr-1 rounded bg-white px-1">{v}</code>)}
+          <div className="rounded-xl bg-neutral-50 p-2 text-xs text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400">
+            Variables : {AVAILABLE_VARS.map((v) => <code key={v} className="mr-1 rounded bg-white px-1 dark:bg-neutral-800">{v}</code>)}
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
-          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
+          <button onClick={onClose} className="rounded-full bg-neutral-100 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700">Annuler</button>
+          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Enregistrer
           </button>
         </div>
@@ -244,8 +244,8 @@ function RulesTab({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">Quand un lead atteint une étape, envoie automatiquement un message.</p>
-        <button onClick={() => setShowNew((s) => !s)} disabled={templates.length === 0} className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">Quand un lead atteint une étape, envoie automatiquement un message.</p>
+        <button onClick={() => setShowNew((s) => !s)} disabled={templates.length === 0} className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
           <Plus className="h-4 w-4" /> Nouvelle règle
         </button>
       </div>
@@ -253,26 +253,26 @@ function RulesTab({
       {templates.length === 0 && <Empty text="Créez d’abord un modèle de message dans l’onglet Modèles." />}
 
       {showNew && templates.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-          {error && <p className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+        <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          {error && <p className="mb-3 rounded-xl bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">{error}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block"><span className="mb-1 block text-xs font-medium text-gray-500">Nom de la règle</span>
+            <label className="block"><span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Nom de la règle</span>
               <input className={INPUT} value={name} onChange={(e) => setName(e.target.value)} placeholder="ex. Relance après soumission" /></label>
-            <label className="block"><span className="mb-1 block text-xs font-medium text-gray-500">Déclencheur : étape atteinte</span>
+            <label className="block"><span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Déclencheur : étape atteinte</span>
               <select className={INPUT} value={stage} onChange={(e) => setStage(e.target.value as LeadStage)}>
                 {PIPELINE_STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select></label>
-            <label className="block"><span className="mb-1 block text-xs font-medium text-gray-500">Modèle à envoyer</span>
+            <label className="block"><span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Modèle à envoyer</span>
               <select className={INPUT} value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
                 <option value="">— choisir —</option>
                 {templates.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.channel === 'email' ? 'courriel' : 'SMS'})</option>)}
               </select></label>
-            <label className="block"><span className="mb-1 block text-xs font-medium text-gray-500">Délai (minutes, 0 = immédiat)</span>
+            <label className="block"><span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Délai (minutes, 0 = immédiat)</span>
               <input type="number" min={0} className={INPUT} value={delay} onChange={(e) => setDelay(e.target.value)} /></label>
           </div>
           <div className="mt-3 flex justify-end gap-2">
-            <button onClick={() => setShowNew(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-white">Annuler</button>
-            <button onClick={create} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-60">
+            <button onClick={() => setShowNew(false)} className="rounded-full bg-neutral-100 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700">Annuler</button>
+            <button onClick={create} disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Créer
             </button>
           </div>
@@ -284,21 +284,21 @@ function RulesTab({
       ) : (
         <div className="space-y-2">
           {rules.map((r) => (
-            <div key={r.id} className={`flex flex-wrap items-center gap-3 rounded-xl border bg-white p-4 shadow-sm ${r.is_active ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
-              <Zap className={`h-5 w-5 shrink-0 ${r.is_active ? 'text-amber-500' : 'text-gray-300'}`} />
+            <div key={r.id} className={`flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-4 dark:bg-neutral-900 ${r.is_active ? 'border-neutral-200 dark:border-neutral-800' : 'border-neutral-200 opacity-60 dark:border-neutral-800'}`}>
+              <Zap className={`h-5 w-5 shrink-0 ${r.is_active ? 'text-amber-500' : 'text-neutral-300 dark:text-neutral-600'}`} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900">{r.name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{r.name}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                   Étape « {STAGE_LABELS[r.trigger_stage]} » → {r.template?.name ?? 'modèle'}
                   {r.delay_minutes > 0 ? <span className="ml-1 inline-flex items-center gap-0.5"><Clock className="h-3 w-3" />{r.delay_minutes} min</span> : ' · immédiat'}
                 </p>
               </div>
               <ChannelBadge channel={r.channel} />
-              <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-gray-600">
-                <input type="checkbox" checked={r.is_active} onChange={() => toggle(r)} className="h-4 w-4 rounded border-gray-300" />
+              <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                <input type="checkbox" checked={r.is_active} onChange={() => toggle(r)} className="h-4 w-4 rounded border-neutral-300 text-neutral-900 accent-neutral-900 dark:border-neutral-700 dark:accent-neutral-100" />
                 Active
               </label>
-              <button onClick={() => remove(r.id)} className="text-gray-300 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+              <button onClick={() => remove(r.id)} className="text-neutral-300 hover:text-red-600 dark:text-neutral-600 dark:hover:text-red-400"><Trash2 className="h-4 w-4" /></button>
             </div>
           ))}
         </div>
@@ -311,11 +311,11 @@ function RulesTab({
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm dark:bg-black/60" onClick={onClose}>
       {children}
     </div>
   )
 }
 function Empty({ text }: { text: string }) {
-  return <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">{text}</div>
+  return <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">{text}</div>
 }

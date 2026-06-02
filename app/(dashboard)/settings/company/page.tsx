@@ -81,14 +81,14 @@ function MemberRow({ member }: { member: MemberWithProfile }) {
     .toUpperCase()
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
-      <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold shrink-0">
+    <div className="flex items-center gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+      <div className="h-8 w-8 rounded-full bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 flex items-center justify-center text-xs font-semibold shrink-0">
         {initials}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{name}</p>
         {!member.is_active && (
-          <p className="text-xs text-yellow-600">Invitation en attente</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400">Invitation en attente</p>
         )}
       </div>
       <div className="shrink-0">
@@ -257,7 +257,7 @@ export default function CompanySettingsPage() {
     return (
       <div className="max-w-3xl mx-auto space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+          <div key={i} className="h-32 bg-neutral-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
         ))}
       </div>
     )
@@ -266,12 +266,12 @@ export default function CompanySettingsPage() {
   if (!company) {
     return (
       <div className="max-w-xl mx-auto mt-16 text-center">
-        <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Aucune entreprise configurée</h2>
-        <p className="text-gray-500 mb-6">
+        <Building2 className="h-12 w-12 text-neutral-400 dark:text-neutral-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Aucune entreprise configurée</h2>
+        <p className="text-neutral-500 dark:text-neutral-400 mb-6">
           Créez votre profil d&apos;entreprise pour accéder à toutes les fonctionnalités de devis et de rapports.
         </p>
-        <Button onClick={handleCreate} loading={creating} className="gap-2">
+        <Button onClick={handleCreate} loading={creating} className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
           <Plus className="h-4 w-4" />
           Créer mon entreprise
         </Button>
@@ -285,12 +285,12 @@ export default function CompanySettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres de l&apos;entreprise</h1>
-        <p className="text-gray-500 mt-1">Configurez votre profil d&apos;entreprise, taxes et préférences</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Paramètres de l&apos;entreprise</h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Configurez votre profil d&apos;entreprise, taxes et préférences</p>
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-1 flex-wrap border-b border-gray-200">
+      <div className="flex gap-1 flex-wrap border-b border-neutral-200 dark:border-neutral-800">
         {SECTIONS.map((s) => {
           const Icon = s.icon
           return (
@@ -301,8 +301,8 @@ export default function CompanySettingsPage() {
               className={[
                 'flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                 activeSection === s.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700',
+                  ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200',
               ].join(' ')}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -370,7 +370,7 @@ export default function CompanySettingsPage() {
                   {...register('address_postal')}
                 />
               </div>
-              <Button type="submit" loading={isSubmitting} className="gap-2">
+              <Button type="submit" loading={isSubmitting} className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
                 <Save className="h-4 w-4" />
                 Sauvegarder
               </Button>
@@ -393,12 +393,12 @@ export default function CompanySettingsPage() {
                 <img
                   src={logoPreview ?? company.logo_url!}
                   alt="Logo"
-                  className="h-20 w-auto max-w-[200px] rounded-lg border border-gray-200 object-contain p-1 bg-white"
+                  className="h-20 w-auto max-w-[200px] rounded-xl border border-neutral-200 dark:border-neutral-800 object-contain p-1 bg-white dark:bg-neutral-900"
                 />
                 <button
                   type="button"
                   onClick={() => { setLogoPreview(null); patchCompany({ logo_url: null }) }}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -415,18 +415,18 @@ export default function CompanySettingsPage() {
                 if (file) handleLogoFile(file)
               }}
               className={[
-                'flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 cursor-pointer transition-colors',
-                logoDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400',
+                'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed py-10 cursor-pointer transition-colors',
+                logoDragging ? 'border-neutral-900 bg-neutral-50 dark:border-neutral-100 dark:bg-neutral-800/50' : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700',
               ].join(' ')}
             >
               {logoUploading ? (
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-neutral-400 dark:text-neutral-500" />
               ) : (
                 <>
-                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-700">Glissez votre logo ici</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG jusqu&apos;à 5 Mo</p>
-                  <label className="mt-3 cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                  <Upload className="h-8 w-8 text-neutral-400 dark:text-neutral-500 mb-2" />
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Glissez votre logo ici</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">PNG, JPG, SVG jusqu&apos;à 5 Mo</p>
+                  <label className="mt-3 cursor-pointer rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 transition-colors">
                     Choisir un fichier
                     <input
                       type="file"
@@ -451,10 +451,10 @@ export default function CompanySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">TPS — Taxe fédérale</p>
-                  <p className="text-xs text-gray-500">Taxe sur les produits et services du Canada</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">TPS — Taxe fédérale</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Taxe sur les produits et services du Canada</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -464,16 +464,16 @@ export default function CompanySettingsPage() {
                     max={100}
                     step={0.001}
                     onChange={(e) => setTaxGst(parseFloat(e.target.value) || 0)}
-                    className="w-20 h-8 rounded-md border border-gray-300 px-2 text-sm text-right"
+                    className="w-20 h-8 rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 px-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                   />
-                  <span className="text-sm text-gray-600">%</span>
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">%</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">TVQ — Taxe provinciale QC</p>
-                  <p className="text-xs text-gray-500">Taxe de vente du Québec</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">TVQ — Taxe provinciale QC</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Taxe de vente du Québec</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -483,18 +483,18 @@ export default function CompanySettingsPage() {
                     max={100}
                     step={0.001}
                     onChange={(e) => setTaxQst(parseFloat(e.target.value) || 0)}
-                    className="w-20 h-8 rounded-md border border-gray-300 px-2 text-sm text-right"
+                    className="w-20 h-8 rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 px-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                   />
-                  <span className="text-sm text-gray-600">%</span>
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">%</span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-600">
-              Total combiné : <strong>{(taxGst + taxQst).toFixed(3)} %</strong>
+            <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
+              Total combiné : <strong className="text-neutral-900 dark:text-neutral-100">{(taxGst + taxQst).toFixed(3)} %</strong>
             </div>
 
-            <Button onClick={() => patchCompany({ tax_gst: taxGst, tax_qst: taxQst })} className="gap-2">
+            <Button onClick={() => patchCompany({ tax_gst: taxGst, tax_qst: taxQst })} className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
               <Save className="h-4 w-4" />
               Sauvegarder les taxes
             </Button>
@@ -512,24 +512,24 @@ export default function CompanySettingsPage() {
           <CardContent className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Taux horaire main-d&apos;œuvre ($/h)</label>
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Taux horaire main-d&apos;œuvre ($/h)</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
                   <input
                     type="number"
                     value={laborRate}
                     min={0}
                     step={0.5}
                     onChange={(e) => setLaborRate(parseFloat(e.target.value) || 0)}
-                    className="h-9 w-full rounded-md border border-gray-300 pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="h-9 w-full rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Marge bénéficiaire (%)</label>
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Marge bénéficiaire (%)</label>
                 <div className="relative">
-                  <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 dark:text-neutral-500" />
                   <input
                     type="number"
                     value={markupPct}
@@ -537,13 +537,13 @@ export default function CompanySettingsPage() {
                     max={500}
                     step={0.5}
                     onChange={(e) => setMarkupPct(parseFloat(e.target.value) || 0)}
-                    className="h-9 w-full rounded-md border border-gray-300 pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="h-9 w-full rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                   />
                 </div>
               </div>
             </div>
 
-            <Button onClick={() => patchCompany({ default_labor_rate: laborRate, default_markup: markupPct })} className="gap-2">
+            <Button onClick={() => patchCompany({ default_labor_rate: laborRate, default_markup: markupPct })} className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
               <Save className="h-4 w-4" />
               Sauvegarder les prix
             </Button>
@@ -559,7 +559,7 @@ export default function CompanySettingsPage() {
             <CardDescription>Unités utilisées dans les mesures et les rapports</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+            <div className="flex rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               {(['metric', 'imperial'] as const).map((sys) => (
                 <button
                   key={sys}
@@ -568,8 +568,8 @@ export default function CompanySettingsPage() {
                   className={[
                     'flex-1 py-3 text-sm font-medium transition-colors',
                     unitSystem === sys
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50',
+                      ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+                      : 'bg-white text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50',
                   ].join(' ')}
                 >
                   {sys === 'metric' ? 'Métrique (m, cm, m²)' : 'Impérial (ft, in, pi²)'}
@@ -577,14 +577,14 @@ export default function CompanySettingsPage() {
               ))}
             </div>
 
-            <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-600">
+            <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 text-sm text-neutral-500 dark:text-neutral-400">
               {unitSystem === 'metric'
-                ? <p>Distances en <strong>mètres</strong>, surfaces en <strong>m²</strong></p>
-                : <p>Distances en <strong>pieds</strong>, surfaces en <strong>pi²</strong></p>
+                ? <p>Distances en <strong className="text-neutral-900 dark:text-neutral-100">mètres</strong>, surfaces en <strong className="text-neutral-900 dark:text-neutral-100">m²</strong></p>
+                : <p>Distances en <strong className="text-neutral-900 dark:text-neutral-100">pieds</strong>, surfaces en <strong className="text-neutral-900 dark:text-neutral-100">pi²</strong></p>
               }
             </div>
 
-            <Button onClick={() => patchCompany({ unit_system: unitSystem })} className="gap-2">
+            <Button onClick={() => patchCompany({ unit_system: unitSystem })} className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
               <Save className="h-4 w-4" />
               Sauvegarder
             </Button>
@@ -601,15 +601,15 @@ export default function CompanySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {members.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">Aucun membre trouvé</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-6">Aucun membre trouvé</p>
             ) : (
               <div>
                 {members.map((m) => <MemberRow key={m.id} member={m} />)}
               </div>
             )}
 
-            <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+            <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900">
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center gap-1.5">
                 <UserPlus className="h-4 w-4" />
                 Inviter un membre
               </p>
@@ -620,7 +620,7 @@ export default function CompanySettingsPage() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="courriel@exemple.com"
                   onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-                  className="flex-1 h-9 rounded-md border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 h-9 rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                 />
                 <Button
                   onClick={handleInvite}
@@ -644,46 +644,46 @@ export default function CompanySettingsPage() {
               <CardTitle>Plan actuel</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between rounded-xl border-2 border-gray-200 p-5">
+              <div className="flex items-center justify-between rounded-2xl border-2 border-neutral-200 dark:border-neutral-800 p-5">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-bold text-gray-900 capitalize">
+                    <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100 capitalize">
                       {company.subscription_tier === 'free' ? 'Gratuit' : company.subscription_tier === 'pro' ? 'Pro' : 'Entreprise'}
                     </span>
-                    <Badge variant="secondary">Actif</Badge>
+                    <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 text-xs font-medium">Actif</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     {company.subscription_tier === 'free'
                       ? 'Jusqu\'à 3 projets · 50 photos · rapports PDF de base'
                       : 'Projets illimités · Toutes les fonctionnalités'}
                   </p>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {company.subscription_tier === 'free' ? '0' : company.subscription_tier === 'pro' ? '49' : '149'}
-                  <span className="text-sm font-normal text-gray-500"> $/mois</span>
+                  <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400"> $/mois</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {company.subscription_tier === 'free' && (
-            <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <Card className="border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
-                    <Crown className="h-5 w-5 text-white" />
+                  <div className="h-10 w-10 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
+                    <Crown className="h-5 w-5 text-white dark:text-neutral-900" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg">Passer à Pro</h3>
-                    <p className="text-sm text-gray-600 mt-1 mb-4">
+                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-lg">Passer à Pro</h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 mb-4">
                       Projets illimités · Photos illimitées · Modèles 3D · Rapports avancés · Support prioritaire
                     </p>
                     <div className="flex items-center gap-3">
                       <div>
-                        <span className="text-3xl font-bold text-gray-900">49 $</span>
-                        <span className="text-gray-500 text-sm">/mois</span>
+                        <span className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">49 $</span>
+                        <span className="text-neutral-500 dark:text-neutral-400 text-sm">/mois</span>
                       </div>
-                      <Button size="lg" className="gap-2 bg-blue-600 hover:bg-blue-700">
+                      <Button size="lg" className="gap-2 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
                         <Crown className="h-4 w-4" />
                         Mettre à niveau
                       </Button>

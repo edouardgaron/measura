@@ -35,7 +35,7 @@ function StatCard({ title, value, icon: Icon, iconColor, bgColor }: StatCardProp
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-neutral-500">{title}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{title}</p>
             <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mt-1">
               {value}
             </p>
@@ -104,10 +104,10 @@ function ProjectRow({ project }: { project: Project }) {
       className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group"
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate transition-colors">
           {project.title}
         </p>
-        <p className="text-xs text-neutral-500 mt-0.5">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
           {project.address_city
             ? `${project.address_city}${project.address_province ? `, ${project.address_province}` : ''}`
             : 'Adresse non spécifiée'}{' '}
@@ -116,7 +116,7 @@ function ProjectRow({ project }: { project: Project }) {
       </div>
       <div className="flex items-center gap-3 ml-4 shrink-0">
         <StatusBadge status={project.status} />
-        <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-blue-500 transition-colors" />
+        <ArrowRight className="h-4 w-4 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />
       </div>
     </Link>
   )
@@ -201,7 +201,7 @@ async function DashboardContent() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
             Bienvenue, {displayName} 👋
           </h1>
-          <p className="text-sm text-neutral-500 mt-0.5">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             Voici un aperçu de vos projets de mesure.
           </p>
         </div>
@@ -219,36 +219,36 @@ async function DashboardContent() {
           title="Total projets"
           value={totalProjects}
           icon={FolderOpen}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50 dark:bg-blue-900/20"
+          iconColor="text-neutral-700 dark:text-neutral-300"
+          bgColor="bg-neutral-100 dark:bg-neutral-800"
         />
         <StatCard
           title="Projets actifs"
           value={activeProjects}
           icon={Activity}
-          iconColor="text-amber-600"
-          bgColor="bg-amber-50 dark:bg-amber-900/20"
+          iconColor="text-amber-600 dark:text-amber-400"
+          bgColor="bg-amber-50 dark:bg-amber-950/30"
         />
         <StatCard
           title="Terminés"
           value={completedProjects}
           icon={CheckCircle2}
-          iconColor="text-green-600"
-          bgColor="bg-green-50 dark:bg-green-900/20"
+          iconColor="text-emerald-600 dark:text-emerald-400"
+          bgColor="bg-emerald-50 dark:bg-emerald-950/30"
         />
         <StatCard
           title="Clients"
           value={clientCount ?? 0}
           icon={Users}
-          iconColor="text-purple-600"
-          bgColor="bg-purple-50 dark:bg-purple-900/20"
+          iconColor="text-violet-600 dark:text-violet-400"
+          bgColor="bg-violet-50 dark:bg-violet-950/30"
         />
         <StatCard
           title="Estimations envoyées"
           value={estimatesCount ?? 0}
           icon={Calculator}
-          iconColor="text-orange-600"
-          bgColor="bg-orange-50 dark:bg-orange-900/20"
+          iconColor="text-orange-600 dark:text-orange-400"
+          bgColor="bg-orange-50 dark:bg-orange-950/30"
         />
       </div>
 
@@ -259,7 +259,7 @@ async function DashboardContent() {
             <CardTitle>Projets récents</CardTitle>
             <Link
               href="/projects"
-              className="text-sm text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+              className="text-sm font-medium text-neutral-900 dark:text-neutral-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-neutral-100 rounded"
             >
               Voir tous
             </Link>
@@ -274,11 +274,11 @@ async function DashboardContent() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FolderOpen className="h-10 w-10 text-neutral-300 mb-3" />
+              <FolderOpen className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-3" />
               <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Aucun projet pour l'instant
               </p>
-              <p className="text-xs text-neutral-500 mt-1 mb-4">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 mb-4">
                 Créez votre premier projet pour commencer.
               </p>
               <Link href="/projects/new">
