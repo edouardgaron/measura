@@ -13,17 +13,18 @@ const config: Config = {
         sans: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
+        // Brand → monochrome ink ramp (Hover look)
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f6f6f6',
+          100: '#ececec',
+          200: '#dcdcdc',
+          300: '#bdbdbd',
+          400: '#8a8a8a',
+          500: '#404040',
+          600: '#141414',
+          700: '#000000',
+          800: '#000000',
+          900: '#000000',
         },
       },
       animation: {

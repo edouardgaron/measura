@@ -1,8 +1,7 @@
 // app/(dashboard)/layout.tsx
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { Header } from '@/components/layout/Header'
+import { TopNav } from '@/components/layout/TopNav'
 import type { Profile, UserRole } from '@/lib/supabase/types'
 
 export default async function DashboardLayout({
@@ -39,17 +38,12 @@ export default async function DashboardLayout({
     updated_at: user.created_at,
   }
 
-  const locale: 'fr' | 'en' = resolvedProfile.locale ?? 'fr'
-
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950">
-      <Sidebar role={resolvedProfile.role} />
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-        <Header user={resolvedProfile} locale={locale} />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
+    <div className="min-h-screen bg-white">
+      <TopNav user={resolvedProfile} email={user.email ?? null} />
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   )
 }

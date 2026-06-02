@@ -89,47 +89,47 @@ export default async function ProjectLayout({ children, params }: Props) {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="space-y-6">
       {/* Project Header */}
-      <div className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 py-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-              aria-label="Retour aux projets"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/projects"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+            aria-label="Retour aux projets"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold text-gray-900">
-                  {project.title}
-                </h1>
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    STATUS_COLORS[project.status as ProjectStatus]
-                  }`}
-                >
-                  {STATUS_LABELS[project.status as ProjectStatus]}
-                </span>
-              </div>
-              {address && (
-                <p className="mt-0.5 truncate text-sm text-gray-500">{address}</p>
-              )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-lg font-bold text-neutral-900">
+                {project.title}
+              </h1>
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${
+                  STATUS_COLORS[project.status as ProjectStatus]
+                }`}
+              >
+                {STATUS_LABELS[project.status as ProjectStatus]}
+              </span>
             </div>
-
-            <ProjectHeaderActions projectId={projectId} projectTitle={project.title} />
+            {address && (
+              <p className="mt-0.5 truncate text-sm text-neutral-500">{address}</p>
+            )}
           </div>
 
-          {/* Tab Navigation — client component for active-state detection */}
+          <ProjectHeaderActions projectId={projectId} projectTitle={project.title} />
+        </div>
+
+        {/* Tab Navigation — client component for active-state detection */}
+        <div className="border-b border-neutral-200">
           <ProjectTabNav tabs={tabs} />
         </div>
       </div>
 
       {/* Page Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      <div>{children}</div>
     </div>
   )
 }

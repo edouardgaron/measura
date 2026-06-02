@@ -13,26 +13,28 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   loading?: boolean
 }
 
+// Hover look: solid ink pills, soft grey secondaries, hairline outlines.
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    'bg-blue-600 text-white shadow hover:bg-blue-700 active:bg-blue-800 focus-visible:ring-blue-500',
+    'bg-neutral-900 text-white hover:bg-neutral-800 active:bg-black focus-visible:ring-neutral-900',
   destructive:
-    'bg-red-600 text-white shadow hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500',
+    'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500',
   outline:
-    'border border-neutral-300 bg-white text-neutral-900 shadow-sm hover:bg-neutral-50 active:bg-neutral-100 focus-visible:ring-blue-500',
+    'border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50 active:bg-neutral-100 focus-visible:ring-neutral-900',
   ghost:
-    'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 focus-visible:ring-blue-500',
+    'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 focus-visible:ring-neutral-900',
   link:
-    'text-blue-600 underline-offset-4 hover:underline focus-visible:ring-blue-500',
+    'text-neutral-900 underline-offset-4 hover:underline focus-visible:ring-neutral-900',
   secondary:
-    'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 focus-visible:ring-blue-500',
+    'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 focus-visible:ring-neutral-900',
 }
 
+// Fully rounded "pill" sizing to match Hover.
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-xs rounded-md gap-1.5',
-  md: 'h-9 px-4 text-sm rounded-md gap-2',
-  lg: 'h-11 px-6 text-base rounded-lg gap-2',
-  icon: 'h-9 w-9 rounded-md',
+  sm: 'h-9 px-4 text-xs rounded-full gap-1.5',
+  md: 'h-10 px-5 text-sm rounded-full gap-2',
+  lg: 'h-12 px-7 text-base rounded-full gap-2',
+  icon: 'h-10 w-10 rounded-full',
 }
 
 const Spinner = () => (

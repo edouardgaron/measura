@@ -31,14 +31,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
           }
           className={cn(
-            'h-9 w-full rounded-md border px-3 py-2 text-sm',
-            'bg-white text-neutral-900 placeholder:text-neutral-400',
-            'border-neutral-300 shadow-sm',
+            'h-11 w-full rounded-xl border px-4 py-2 text-sm',
+            'bg-neutral-100 text-neutral-900 placeholder:text-neutral-400',
+            'border-transparent',
             'transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:border-blue-500',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-0 focus-visible:border-transparent focus-visible:bg-white',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-50',
             'dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700 dark:placeholder:text-neutral-500',
-            'dark:focus-visible:ring-blue-400 dark:disabled:bg-neutral-800',
+            'dark:focus-visible:ring-neutral-100 dark:disabled:bg-neutral-800',
             error && 'border-red-500 focus-visible:ring-red-500 dark:border-red-500',
             className
           )}

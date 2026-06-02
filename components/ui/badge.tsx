@@ -17,7 +17,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const variantClasses: Record<BadgeVariant, string> = {
   default:
-    'bg-blue-600 text-white border-transparent',
+    'bg-neutral-900 text-white border-transparent',
   secondary:
     'bg-neutral-100 text-neutral-700 border-transparent dark:bg-neutral-800 dark:text-neutral-300',
   success:
@@ -57,7 +57,26 @@ export function statusVariant(status: ProjectStatus): BadgeVariant {
   return map[status]
 }
 
-/** Render a project status with the correct badge styling */
+// Hover-style solid status pills (used as overlays on project cards).
+const STATUS_PILL: Record<ProjectStatus, string> = {
+  draft: 'bg-neutral-700 text-white',
+  photos_pending: 'bg-violet-600 text-white',
+  measuring: 'bg-neutral-900 text-white',
+  review: 'bg-amber-500 text-white',
+  completed: 'bg-emerald-600 text-white',
+  archived: 'bg-neutral-400 text-white',
+}
+
+const STATUS_LABELS_FR: Record<ProjectStatus, string> = {
+  draft: 'Brouillon',
+  photos_pending: 'Photos nécessaires',
+  measuring: 'En mesure',
+  review: 'En révision',
+  completed: 'Complete',
+  archived: 'Archivé',
+}
+
+/** Render a project status as a solid Hover-style pill */
 export function StatusBadge({
   status,
   className,
@@ -65,18 +84,16 @@ export function StatusBadge({
   status: ProjectStatus
   className?: string
 }) {
-  const labels: Record<ProjectStatus, string> = {
-    draft: 'Draft',
-    photos_pending: 'Photos Pending',
-    measuring: 'Measuring',
-    review: 'Review',
-    completed: 'Completed',
-    archived: 'Archived',
-  }
   return (
-    <Badge variant={statusVariant(status)} className={className}>
-      {labels[status]}
-    </Badge>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold shadow-sm',
+        STATUS_PILL[status],
+        className
+      )}
+    >
+      {STATUS_LABELS_FR[status]}
+    </span>
   )
 }
 

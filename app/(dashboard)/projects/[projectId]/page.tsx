@@ -4,42 +4,18 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import {
   Camera,
+  Sparkles,
   Ruler,
+  LayoutGrid,
   FileText,
-  UserPlus,
-  StickyNote,
-  CheckCircle2,
-  Circle,
-  Building2,
-  Calculator,
-  CheckSquare,
-  Palette,
-  FileSignature,
-  ClipboardList,
-  HardHat,
-  Hammer,
-  DollarSign,
-  Receipt,
+  Box,
+  Home,
+  PanelsTopLeft,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import type { ProjectStatus, UnitSystem } from '@/lib/supabase/types'
 
 interface Props {
   params: Promise<{ projectId: string }>
-}
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  draft: 'Brouillon',
-  photos_pending: 'Photos requises',
-  measuring: 'En mesure',
-  review: 'En révision',
-  completed: 'Terminé',
-  archived: 'Archivé',
-}
-
-const UNIT_LABELS: Record<UnitSystem, string> = {
-  metric: 'Métrique (m / cm)',
-  imperial: 'Impérial (ft / in)',
 }
 
 export default async function ProjectOverviewPage({ params }: Props) {
@@ -49,10 +25,9 @@ export default async function ProjectOverviewPage({ params }: Props) {
   const { data: project } = await supabase
     .from('projects')
     .select(
-      `id, title, address_line1, address_city, address_province, address_postal, address_country,
-       status, unit_system, notes, created_at, updated_at,
-       members:project_members(id, email, role, invite_accepted_at, profile:profiles(full_name, avatar_url)),
-       photos(id, storage_path, facade_label, sort_order)`
+      `id, title, address_line1, address_city, address_province, address_postal,
+       status, created_at,
+       photos(id, storage_path, sort_order)`
     )
     .eq('id', projectId)
     .single()
@@ -64,52 +39,31 @@ export default async function ProjectOverviewPage({ params }: Props) {
     .select('id', { count: 'exact', head: true })
     .eq('project_id', projectId)
 
-  const { count: reportsCount } = await supabase
-    .from('reports')
+  const { count: surfacesCount } = await supabase
+    .from('surfaces')
     .select('id', { count: 'exact', head: true })
     .eq('project_id', projectId)
-
-  const { count: tasksTotal } = await supabase
-    .from('tasks')
-    .select('id', { count: 'exact', head: true })
-    .eq('project_id', projectId)
-
-  const { count: tasksDone } = await supabase
-    .from('tasks')
-    .select('id', { count: 'exact', head: true })
-    .eq('project_id', projectId)
-    .eq('status', 'done')
 
   const { data: estimateData } = await supabase
     .from('estimates')
-    .select('id, status, total')
+    .select('id, status')
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const { count: workOrdersTotal } = await supabase
-    .from('work_orders')
-    .select('id', { count: 'exact', head: true })
-    .eq('project_id', projectId)
-
-  const { count: dailyReportsTotal } = await supabase
-    .from('daily_reports')
-    .select('id', { count: 'exact', head: true })
-    .eq('project_id', projectId)
-
-  const photos = (project.photos as { id: string; storage_path: string; facade_label: string | null; sort_order: number }[] | null) ?? []
-  const members = (project.members as { id: string; email: string; role: string; invite_accepted_at: string | null }[] | null) ?? []
+  const photos = (project.photos as { id: string; storage_path: string; sort_order: number }[] | null) ?? []
+  const sortedPhotos = [...photos].sort((a, b) => a.sort_order - b.sort_order)
   const photoCount = photos.length
   const measureCount = measurementsCount ?? 0
-  const reportCount = reportsCount ?? 0
+  const surfaceCount = surfacesCount ?? 0
 
-  const tasksCount = tasksTotal ?? 0
-  const tasksDoneCount = tasksDone ?? 0
-  const workOrderCount = workOrdersTotal ?? 0
-  const dailyReportCount = dailyReportsTotal ?? 0
+  const getPhotoUrl = (storagePath: string) =>
+    supabase.storage.from('photos').getPublicUrl(storagePath).data.publicUrl
 
-  const clientMember = members.find((m) => m.role === 'client')
+  const coverUrl = sortedPhotos[0] ? getPhotoUrl(sortedPhotos[0].storage_path) : null
+  const thumb = (i: number) =>
+    sortedPhotos[i] ? getPhotoUrl(sortedPhotos[i].storage_path) : null
 
   const addressParts = [
     project.address_line1,
@@ -118,404 +72,178 @@ export default async function ProjectOverviewPage({ params }: Props) {
     project.address_postal,
   ].filter(Boolean)
 
-  const firstFourPhotos = [...photos]
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .slice(0, 4)
-
-  const getPhotoUrl = (storagePath: string) => {
-    const { data } = supabase.storage.from('photos').getPublicUrl(storagePath)
-    return data.publicUrl
-  }
+  const createdDate = new Date(project.created_at).toLocaleDateString('fr-CA')
+  const jobNo = project.id.replace(/-/g, '').slice(0, 8).toUpperCase()
 
   return (
-    <div className="space-y-6">
-      {/* Info Card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-              <Building2 className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">{project.title}</h2>
-              {addressParts.length > 0 && (
-                <p className="text-sm text-gray-500">{addressParts.join(', ')}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">Statut</dt>
-            <dd className="mt-1 text-sm font-medium text-gray-900">
-              {STATUS_LABELS[project.status as ProjectStatus]}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">Système d&apos;unités</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {UNIT_LABELS[project.unit_system as UnitSystem] ?? project.unit_system}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">Créé le</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {new Date(project.created_at).toLocaleDateString('fr-CA')}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">Modifié le</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {new Date(project.updated_at).toLocaleDateString('fr-CA')}
-            </dd>
-          </div>
-        </dl>
+    <div className="mx-auto max-w-6xl space-y-10 pb-10">
+      {/* Hero */}
+      <div className="pt-2 text-center">
+        <h2 className="text-balance text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+          {project.title}
+        </h2>
+        {addressParts.length > 0 && (
+          <p className="mt-3 text-sm text-neutral-500">{addressParts.join(', ')}</p>
+        )}
+        <p className="mt-1 text-sm text-neutral-400">Créé le {createdDate}</p>
+        <p className="text-sm text-neutral-400">No de travail : {jobNo}</p>
       </div>
 
-      {/* Progress Tracker */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-base font-semibold text-gray-900">Progression</h3>
-        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          <ProgressItem
-            icon={<Camera className="h-5 w-5" />}
-            label="Photos"
-            value={photoCount}
-            total={4}
-            suffix="/ 4 recommandées"
-            href={`/projects/${projectId}/photos`}
-            color="blue"
-          />
-          <ProgressItem
-            icon={<Ruler className="h-5 w-5" />}
-            label="Mesures"
-            value={measureCount}
-            href={`/projects/${projectId}/measurements`}
-            color="purple"
-          />
-          <ProgressItem
-            icon={<Calculator className="h-5 w-5" />}
-            label="Estimations"
-            value={estimateData ? 1 : 0}
-            href={`/projects/${projectId}/estimate`}
-            color="orange"
-            badge={estimateData ? estimateData.status : undefined}
-          />
-          <ProgressItem
-            icon={<HardHat className="h-5 w-5" />}
-            label="Bons de travail"
-            value={workOrderCount}
-            href={`/projects/${projectId}/work-orders`}
-            color="orange"
-          />
-          <ProgressItem
-            icon={<Hammer className="h-5 w-5" />}
-            label="Rapports chantier"
-            value={dailyReportCount}
-            href={`/projects/${projectId}/site`}
-            color="teal"
-          />
-          <ProgressItem
-            icon={<CheckSquare className="h-5 w-5" />}
-            label="Tâches"
-            value={tasksDoneCount}
-            total={tasksCount || undefined}
-            suffix={tasksCount > 0 ? `/ ${tasksCount} total` : undefined}
-            href={`/projects/${projectId}/tasks`}
-            color="teal"
-          />
-          <ProgressItem
-            icon={<Palette className="h-5 w-5" />}
-            label="Design"
-            value={0}
-            href={`/projects/${projectId}/design`}
-            color="pink"
-          />
-          <ProgressItem
-            icon={<FileText className="h-5 w-5" />}
-            label="Rapports"
-            value={reportCount}
-            href={`/projects/${projectId}/report`}
-            color="green"
-          />
-          <ProgressItem
-            icon={<FileSignature className="h-5 w-5" />}
-            label="Propositions"
-            value={0}
-            href={`/projects/${projectId}/proposal`}
-            color="indigo"
-          />
-          <ProgressItem
-            icon={<ClipboardList className="h-5 w-5" />}
-            label="Inspection"
-            value={0}
-            href={`/projects/${projectId}/inspection`}
-            color="red"
-          />
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <QuickAction
-          href={`/projects/${projectId}/settings#invite`}
-          icon={<UserPlus className="h-5 w-5" />}
-          label="Inviter le client"
-          description="Envoyer un lien de dépôt de photos"
-          color="blue"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/measurements`}
-          icon={<Ruler className="h-5 w-5" />}
-          label="Prendre mesures"
-          description="Annoter et mesurer les photos"
-          color="purple"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/estimate`}
-          icon={<Calculator className="h-5 w-5" />}
-          label="Créer estimation"
-          description="Calculer surfaces et préparer un devis"
-          color="orange"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/work-orders`}
-          icon={<HardHat className="h-5 w-5" />}
-          label="Bon de travail"
-          description="Générer le bon de travail du chantier"
-          color="orange"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/site`}
-          icon={<Hammer className="h-5 w-5" />}
-          label="Gérer le chantier"
-          description="Rapports journaliers, pointage, problèmes, livraisons"
-          color="teal"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/tasks`}
-          icon={<CheckSquare className="h-5 w-5" />}
-          label="Gérer tâches"
-          description="Suivre l'avancement du chantier"
-          color="teal"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/design`}
-          icon={<Palette className="h-5 w-5" />}
-          label="Choisir couleurs"
-          description="Visualiser les matériaux et couleurs"
-          color="pink"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/profitability`}
-          icon={<DollarSign className="h-5 w-5" />}
-          label="Voir la rentabilité"
-          description="Profit réel vs prévu, marges et alertes"
-          color="green"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/invoices`}
-          icon={<Receipt className="h-5 w-5" />}
-          label="Facturer"
-          description="Créer une facture et encaisser le paiement"
-          color="blue"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/report`}
-          icon={<FileText className="h-5 w-5" />}
-          label="Générer rapport"
-          description="Créer un rapport PDF du projet"
-          color="green"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/proposal`}
-          icon={<FileSignature className="h-5 w-5" />}
-          label="Créer proposition"
-          description="Envoyer une proposition au client pour signature"
-          color="indigo"
-        />
-        <QuickAction
-          href={`/projects/${projectId}/inspection`}
-          icon={<ClipboardList className="h-5 w-5" />}
-          label="Inspecter dommages"
-          description="Documenter et suivre les dommages du bâtiment"
-          color="red"
-        />
-      </div>
-
-      {/* Client Info */}
-      {clientMember && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-3 text-base font-semibold text-gray-900">Client invité</h3>
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
-              {clientMember.email.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">{clientMember.email}</p>
-              <p className="text-xs text-gray-500">
-                {clientMember.invite_accepted_at
-                  ? `Accepté le ${new Date(clientMember.invite_accepted_at).toLocaleDateString('fr-CA')}`
-                  : 'Invitation en attente'}
-              </p>
-            </div>
-            <div className="ml-auto">
-              {clientMember.invite_accepted_at ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-              ) : (
-                <Circle className="h-5 w-5 text-gray-300" />
-              )}
-            </div>
+      {/* Three panels */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Design 2D */}
+        <Panel title="Design en 2D">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-neutral-100">
+            {coverUrl ? (
+              <Image
+                src={coverUrl}
+                alt="Aperçu de la propriété"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-neutral-300">
+                <Camera className="h-10 w-10" strokeWidth={1.25} />
+              </div>
+            )}
+            <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow-sm">
+              <Sparkles className="h-4 w-4" />
+            </span>
           </div>
-        </div>
-      )}
+          <PanelButton href={`/projects/${projectId}/design`}>
+            Commencer le design en 2D
+          </PanelButton>
+        </Panel>
 
-      {/* Photos Thumbnail Grid */}
-      {firstFourPhotos.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-semibold text-gray-900">Photos récentes</h3>
-            <Link
+        {/* Design 3D */}
+        <Panel title="Design en 3D">
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((i) => {
+              const url = thumb(i)
+              return (
+                <div
+                  key={i}
+                  className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-xl ${
+                    url ? 'bg-neutral-100' : 'border border-dashed border-neutral-200 bg-neutral-50'
+                  }`}
+                >
+                  {url ? (
+                    <Image
+                      src={url}
+                      alt={`Vue ${i + 1}`}
+                      fill
+                      sizes="160px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <Home className="h-6 w-6 text-neutral-300" strokeWidth={1.25} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <PanelButton href={`/projects/${projectId}/model`}>
+            Commencer le design en 3D
+          </PanelButton>
+        </Panel>
+
+        {/* Mesures */}
+        <Panel title="Mesures">
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile
+              icon={<LayoutGrid className="h-4 w-4" />}
+              value={surfaceCount}
+              label="Surfaces"
+              href={`/projects/${projectId}/measurements`}
+            />
+            <StatTile
+              icon={<Ruler className="h-4 w-4" />}
+              value={measureCount}
+              label="Mesures"
+              href={`/projects/${projectId}/measurements`}
+            />
+            <StatTile
+              icon={<Camera className="h-4 w-4" />}
+              value={photoCount}
+              label="Photos"
               href={`/projects/${projectId}/photos`}
-              className="text-sm text-blue-600 hover:underline"
+            />
+            <StatTile
+              icon={<PanelsTopLeft className="h-4 w-4" />}
+              value={estimateData ? 'Voir' : '—'}
+              label="Extérieur complet"
+              href={`/projects/${projectId}/report`}
+              muted
+            />
+          </div>
+          <div className="mt-auto flex gap-3 pt-4">
+            <Link
+              href={`/projects/${projectId}/model`}
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200"
             >
-              Voir toutes ({photoCount})
+              <Box className="h-4 w-4" />
+              3D
+            </Link>
+            <Link
+              href={`/projects/${projectId}/report`}
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-neutral-100 text-sm font-medium text-neutral-800 hover:bg-neutral-200"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {firstFourPhotos.map((photo) => (
-              <Link
-                key={photo.id}
-                href={`/projects/${projectId}/photos`}
-                className="group relative aspect-video overflow-hidden rounded-lg bg-gray-100"
-              >
-                <Image
-                  src={getPhotoUrl(photo.storage_path)}
-                  alt={photo.facade_label ?? 'Photo'}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 640px) 50vw, 25vw"
-                />
-                {photo.facade_label && (
-                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
-                    {photo.facade_label}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Notes */}
-      {project.notes && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <StickyNote className="h-4 w-4 text-gray-400" />
-            <h3 className="text-base font-semibold text-gray-900">Notes</h3>
-          </div>
-          <p className="whitespace-pre-wrap text-sm text-gray-700">{project.notes}</p>
-        </div>
-      )}
+        </Panel>
+      </div>
     </div>
   )
 }
 
 /* --- Sub-components --- */
 
-function ProgressItem({
-  icon,
-  label,
-  value,
-  total,
-  suffix,
-  href,
-  color,
-  badge,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  total?: number
-  suffix?: string
-  href: string
-  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink' | 'indigo' | 'red'
-  badge?: string
-}) {
-  const colorClasses = {
-    blue:   { bg: 'bg-blue-50',   text: 'text-blue-600',   bar: 'bg-blue-500' },
-    purple: { bg: 'bg-purple-50', text: 'text-purple-600', bar: 'bg-purple-500' },
-    green:  { bg: 'bg-green-50',  text: 'text-green-600',  bar: 'bg-green-500' },
-    orange: { bg: 'bg-orange-50', text: 'text-orange-600', bar: 'bg-orange-500' },
-    teal:   { bg: 'bg-teal-50',   text: 'text-teal-600',   bar: 'bg-teal-500' },
-    pink:   { bg: 'bg-pink-50',   text: 'text-pink-600',   bar: 'bg-pink-500' },
-    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', bar: 'bg-indigo-500' },
-    red:    { bg: 'bg-red-50',    text: 'text-red-600',    bar: 'bg-red-500' },
-  }
-  const c = colorClasses[color]
-  const pct = total ? Math.min((value / total) * 100, 100) : 0
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl bg-neutral-50 p-5">
+      <h3 className="text-center text-base font-semibold text-neutral-900">{title}</h3>
+      {children}
+    </section>
+  )
+}
 
+function PanelButton({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
-      className="flex items-start gap-3 rounded-lg border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
+      className="mt-auto inline-flex h-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100"
     >
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${c.bg} ${c.text}`}>
-        {icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-700">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        {badge && (
-          <span className="inline-block rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 capitalize">
-            {badge}
-          </span>
-        )}
-        {suffix && <p className="text-xs text-gray-400">{suffix}</p>}
-        {total !== undefined && total > 0 && (
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-            <div className={`h-full rounded-full ${c.bar}`} style={{ width: `${pct}%` }} />
-          </div>
-        )}
-      </div>
+      {children}
     </Link>
   )
 }
 
-function QuickAction({
-  href,
+function StatTile({
   icon,
+  value,
   label,
-  description,
-  color,
+  href,
+  muted,
 }: {
-  href: string
   icon: React.ReactNode
+  value: React.ReactNode
   label: string
-  description: string
-  color: 'blue' | 'purple' | 'green' | 'orange' | 'teal' | 'pink' | 'indigo' | 'red'
+  href: string
+  muted?: boolean
 }) {
-  const colorClasses = {
-    blue:   'bg-blue-600 hover:bg-blue-700',
-    purple: 'bg-purple-600 hover:bg-purple-700',
-    green:  'bg-green-600 hover:bg-green-700',
-    orange: 'bg-orange-500 hover:bg-orange-600',
-    teal:   'bg-teal-600 hover:bg-teal-700',
-    pink:   'bg-pink-500 hover:bg-pink-600',
-    indigo: 'bg-indigo-600 hover:bg-indigo-700',
-    red:    'bg-red-600 hover:bg-red-700',
-  }
-
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 rounded-xl p-4 text-white transition-colors ${colorClasses[color]}`}
+      className={`flex flex-col gap-1 rounded-xl p-4 transition-colors ${
+        muted ? 'bg-neutral-100 hover:bg-neutral-200' : 'bg-white hover:bg-neutral-100'
+      }`}
     >
-      <div className="shrink-0">{icon}</div>
-      <div>
-        <p className="font-semibold">{label}</p>
-        <p className="text-xs opacity-80">{description}</p>
-      </div>
+      <span className="text-neutral-400">{icon}</span>
+      <span className="text-xl font-bold text-neutral-900">{value}</span>
+      <span className="text-xs text-neutral-500">{label}</span>
     </Link>
   )
 }
