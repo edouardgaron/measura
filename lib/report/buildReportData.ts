@@ -21,6 +21,12 @@ export interface ReportSurface {
   pitch: number | null
   unit: string | null
   loss_factor: number | null
+  // Position 2D sur la façade (migration 015) — pour les élévations exactes.
+  // position_x = décalage horizontal du bord gauche depuis le bord gauche du mur,
+  // sill_height = hauteur de l'allège au-dessus du sol (même unité).
+  position_x?: number | null
+  sill_height?: number | null
+  detected_by?: 'manual' | 'ai' | 'photogrammetry' | null
 }
 
 export interface HouseModelLike {
@@ -213,11 +219,21 @@ export function buildReportData(
   const pitch = roofPitchBreakdown[0]?.pitch ?? (footprint.roofType === 'flat' ? 0 : 6)
   const dims = { width, depth, wallHeight, pitch }
 
-  // Ouvertures par élévation
+  // Ouvertures par élévation, triées de gauche à droite quand la position
+  // réelle est connue (sinon ordre d'origine — répartition uniforme au rendu).
   const openingsBySide: Record<string, ReportSurface[]> = {}
   for (const o of [...windows, ...doors]) {
     const k = o.facade_side ?? 'front'
     ;(openingsBySide[k] ??= []).push(o)
+  }
+  for (const k of Object.keys(openingsBySide)) {
+    openingsBySide[k].sort((a, b) => {
+      const ax = a.position_x, bx = b.position_x
+      if (ax == null && bx == null) return 0
+      if (ax == null) return 1
+      if (bx == null) return -1
+      return ax - bx
+    })
   }
 
   return {

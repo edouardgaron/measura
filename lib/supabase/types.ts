@@ -281,6 +281,12 @@ export interface SurfaceCalculation {
   pitch: number | null
   unit: string
   loss_factor: number
+  // Position 2D de l'ouverture sur sa façade (migration 015). Repère mur :
+  // position_x = décalage horizontal depuis le bord gauche du mur,
+  // sill_height = hauteur de l'allège au-dessus du sol (unité = `unit`).
+  position_x: number | null
+  sill_height: number | null
+  detected_by: 'manual' | 'ai' | 'photogrammetry' | null
   notes: string | null
   created_at: string
   updated_at: string

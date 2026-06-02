@@ -6,14 +6,14 @@ import { useSelectedLayoutSegment } from 'next/navigation'
 import {
   LayoutDashboard, Camera, Ruler, Box, FileText,
   Settings, Calculator, CheckSquare, Palette,
-  FileSignature, ClipboardList, Cpu, HardHat, Hammer, DollarSign, Receipt, Map, Bot, Clock,
+  FileSignature, ClipboardList, Cpu, HardHat, Hammer, DollarSign, Receipt, Map, Bot, Clock, Building2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   LayoutDashboard, Camera, Ruler, Box, FileText,
   Settings, Calculator, CheckSquare, Palette,
-  FileSignature, ClipboardList, Cpu, HardHat, Hammer, DollarSign, Receipt, Map, Bot, Clock,
+  FileSignature, ClipboardList, Cpu, HardHat, Hammer, DollarSign, Receipt, Map, Bot, Clock, Building2,
 }
 
 interface Tab {

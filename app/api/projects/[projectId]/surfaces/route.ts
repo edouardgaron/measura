@@ -93,6 +93,7 @@ export async function GET(
       `id, facade_side, surface_type, label,
        gross_area, opening_area, net_area,
        perimeter, length, height, pitch,
+       position_x, sill_height, detected_by,
        unit, loss_factor, notes,
        created_at, updated_at`
     )
@@ -151,6 +152,9 @@ export async function POST(
     length?: number
     height?: number
     pitch?: number
+    position_x?: number
+    sill_height?: number
+    detected_by?: string
     unit?: string
     loss_factor?: number
     notes?: string
@@ -223,6 +227,9 @@ export async function POST(
     length:       body.length ?? null,
     height:       body.height ?? null,
     pitch:        body.pitch ?? null,
+    position_x:   body.position_x ?? null,
+    sill_height:  body.sill_height ?? null,
+    detected_by:  body.detected_by ?? null,
     unit:         body.unit ?? 'ft',
     loss_factor:  body.loss_factor ?? 0.10,
     notes:        body.notes ?? null,

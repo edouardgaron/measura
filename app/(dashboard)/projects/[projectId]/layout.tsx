@@ -70,6 +70,7 @@ export default async function ProjectLayout({ children, params }: Props) {
     { label: 'Aperçu',     href: `/projects/${projectId}`,             icon: 'LayoutDashboard', segment: null },
     { label: 'Photos',     href: `/projects/${projectId}/photos`,       icon: 'Camera',          segment: 'photos' },
     { label: 'Mesures',    href: `/projects/${projectId}/measurements`, icon: 'Ruler',           segment: 'measurements' },
+    { label: 'Élévations', href: `/projects/${projectId}/elevations`,    icon: 'Building2',       segment: 'elevations' },
     { label: 'Estimation', href: `/projects/${projectId}/estimate`,     icon: 'Calculator',      segment: 'estimate' },
     { label: 'Bons de travail', href: `/projects/${projectId}/work-orders`, icon: 'HardHat',     segment: 'work-orders' },
     { label: 'Chantier',   href: `/projects/${projectId}/site`,         icon: 'Hammer',          segment: 'site' },

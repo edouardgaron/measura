@@ -47,20 +47,23 @@ function trim(label: string, type: ReportSurface['surface_type'], length: number
   }
 }
 type Side = ReportSurface['facade_side']
-function win(label: string, wIn: number, hIn: number, side: Side = 'front'): ReportSurface {
+// posX = décalage horizontal (pi) depuis le bord gauche du mur ; sill = hauteur d'allège (pi).
+function win(label: string, wIn: number, hIn: number, side: Side = 'front', posX?: number, sill?: number): ReportSurface {
   const w = ft(wIn), h = ft(hIn)
   return {
     id: id(), facade_side: side, surface_type: 'window', label,
     gross_area: w * h, opening_area: 0, net_area: w * h,
     perimeter: null, length: w, height: h, pitch: null, unit: 'ft', loss_factor: 0.1,
+    position_x: posX ?? null, sill_height: sill ?? null, detected_by: posX != null ? 'ai' : null,
   }
 }
-function door(label: string, wIn: number, hIn: number, side: Side = 'front'): ReportSurface {
+function door(label: string, wIn: number, hIn: number, side: Side = 'front', posX?: number, sill?: number): ReportSurface {
   const w = ft(wIn), h = ft(hIn)
   return {
     id: id(), facade_side: side, surface_type: 'door', label,
     gross_area: w * h, opening_area: 0, net_area: w * h,
     perimeter: null, length: w, height: h, pitch: null, unit: 'ft', loss_factor: 0.1,
+    position_x: posX ?? null, sill_height: sill ?? null, detected_by: posX != null ? 'ai' : null,
   }
 }
 
@@ -76,15 +79,16 @@ const surfaces: ReportSurface[] = [
   trim('Avant-toits (fascia)', 'fascia', ft(98 * 12 + 8), 0),
   trim('Rives (rakes)', 'fascia', ft(110 * 12 + 10), 0),
   trim('Soffite', 'soffit', 0, 429),
-  // Fenêtres (réparties par élévation)
-  win('W-105', 19, 55, 'front'), win('W-106', 19, 55, 'front'), win('W-107', 19, 55, 'front'),
-  win('W-108', 19, 55, 'front'), win('W-109', 19, 55, 'front'), win('W-110', 19, 55, 'front'),
+  // Fenêtres avant — positions RÉELLES (X depuis la gauche, allège), façade large de 29.58 pi
+  win('W-105', 19, 55, 'front', 1.5, 3.2), win('W-106', 19, 55, 'front', 5.0, 3.2), win('W-107', 19, 55, 'front', 8.5, 3.2),
+  win('W-108', 19, 55, 'front', 18.0, 3.2), win('W-109', 19, 55, 'front', 22.0, 3.2), win('W-110', 19, 55, 'front', 26.5, 3.2),
+  // Autres élévations — sans position (repli répartition uniforme)
   win('W-111', 30, 44, 'right'), win('W-112', 30, 44, 'right'), win('W-113', 27, 36, 'right'),
   win('W-114', 30, 44, 'back'), win('W-115', 30, 44, 'back'), win('W-116', 27, 36, 'back'),
   win('W-117', 40, 36, 'left'), win('W-118', 27, 46, 'left'),
   win('W-001', 32, 21, 'back'), win('W-002', 32, 21, 'back'), win('W-003', 35, 17, 'right'), win('W-004', 37, 19, 'left'),
-  // Portes
-  door('D-1', 36, 80, 'front'), door('SGD-1', 60, 80, 'back'),
+  // Portes — porte avant positionnée (allège au sol)
+  door('D-1', 36, 80, 'front', 13.0, 0), door('SGD-1', 60, 80, 'back'),
 ]
 
 // Empreinte en L (porche à l'avant) — pieds, y vers l'avant

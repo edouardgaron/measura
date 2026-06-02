@@ -266,30 +266,44 @@ function ElevationDiagram({
     roof = <Polygon points={`${xL},${yWallTop} ${cx},${yRoofTop} ${xR},${yWallTop}`} fill="#ededed" stroke={INK} strokeWidth={1} />
   }
 
-  // Openings laid out in a row
-  const ops = openings.slice(0, 9)
-  const widths = ops.map((o) => Math.max((o.length ?? 1) * scale, 6))
-  const totalW = widths.reduce((a, b) => a + b, 0)
-  const space = ops.length ? (drawW - totalW) / (ops.length + 1) : 0
-  let penX = xL + space
+  // Une ouverture est « positionnée » si on connaît son décalage horizontal
+  // et sa hauteur d'allège (migration 015) → placée à sa vraie position.
+  const isPlaced = (o: ReportSurface) => o.position_x != null && o.sill_height != null
+  const ops = openings.slice(0, 12)
+
+  // Disposition de repli (uniforme) pour les ouvertures sans position connue.
+  const unplaced = ops.filter((o) => !isPlaced(o))
+  const fbWidths = unplaced.map((o) => Math.max((o.length ?? 1) * scale, 6))
+  const fbTotalW = fbWidths.reduce((a, b) => a + b, 0)
+  const fbSpace = unplaced.length ? (drawW - fbTotalW) / (unplaced.length + 1) : 0
+  let fbPenX = xL + fbSpace
+
+  // Géométrie de chaque ouverture en pixels SVG.
+  const opGeom = ops.map((o) => {
+    const w = Math.max((o.length ?? 1) * scale, 6)
+    if (isPlaced(o)) {
+      const h = Math.min((o.height ?? 1) * scale, wallPx * 0.92)
+      const x = Math.max(xL, Math.min(xL + (o.position_x ?? 0) * scale, xR - w))
+      const y = Math.max(yWallTop + 2, yWallBot - (o.sill_height ?? 0) * scale - h)
+      return { o, x, y, w, h }
+    }
+    const h = Math.min((o.height ?? 1) * scale, wallPx * 0.78)
+    const x = fbPenX
+    const y = yWallBot - h - wallPx * 0.12
+    fbPenX += w + fbSpace
+    return { o, x, y, w, h }
+  })
 
   return (
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
       {roof}
       <Rect x={xL} y={yWallTop} width={drawW} height={wallPx} fill="#f4f4f4" stroke={INK} strokeWidth={1} />
-      {ops.map((o, i) => {
-        const w = widths[i]
-        const h = Math.min((o.height ?? 1) * scale, wallPx * 0.78)
-        const x = penX
-        const y = yWallBot - h - wallPx * 0.12
-        penX += w + space
-        return (
-          <G key={o.id}>
-            <Rect x={x} y={y} width={w} height={h} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
-            {svgText(x + w / 2, y - 2, o.label ?? '', { size: 5.5, fill: GREY })}
-          </G>
-        )
-      })}
+      {opGeom.map(({ o, x, y, w, h }) => (
+        <G key={o.id}>
+          <Rect x={x} y={y} width={w} height={h} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
+          {svgText(x + w / 2, y - 2, o.label ?? '', { size: 5.5, fill: GREY })}
+        </G>
+      ))}
       {/* cote largeur */}
       <Line x1={xL} y1={yWallBot + 12} x2={xR} y2={yWallBot + 12} stroke={LIGHT} strokeWidth={0.6} />
       <Line x1={xL} y1={yWallBot + 8} x2={xL} y2={yWallBot + 16} stroke={LIGHT} strokeWidth={0.6} />
@@ -543,6 +557,15 @@ export default function ReportTemplate(props: ReportTemplateProps) {
           {pi === 0 && <Text style={styles.sectionTitle}>Élévations</Text>}
           {pair.map((e) => {
             const ops = data.openingsBySide[e.side] ?? []
+            const placed = ops.filter((o) => o.position_x != null && o.sill_height != null).length
+            const positionNote =
+              ops.length === 0
+                ? 'aucune ouverture'
+                : placed === ops.length
+                  ? 'positions réelles'
+                  : placed > 0
+                    ? `${placed}/${ops.length} positionnée(s) · reste approximatif`
+                    : 'positions approximatives'
             return (
               <View key={e.side} style={{ marginBottom: 16 }} wrap={false}>
                 <Text style={styles.subTitle}>{e.label}</Text>
@@ -557,7 +580,7 @@ export default function ReportTemplate(props: ReportTemplateProps) {
                   />
                 </View>
                 <Text style={{ fontSize: 7.5, color: GREY, marginTop: 2 }}>
-                  {ops.length} ouverture(s) · schéma proportionnel (positions approximatives)
+                  {ops.length} ouverture(s) · schéma proportionnel ({positionNote})
                 </Text>
               </View>
             )
