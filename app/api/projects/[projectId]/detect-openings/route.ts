@@ -13,17 +13,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireProjectAccess } from '@/lib/api/access'
 import { buildPlanData } from '@/lib/plans/geometry'
-import { detectOpenings, type OpeningKind } from '@/lib/ai/detectOpenings'
+import { detectOpenings } from '@/lib/ai/detectOpenings'
 import { isAiConfigured } from '@/lib/ai/client'
+import { persistDetectedOpenings, type OpeningPlacement, type FacadeSide } from '@/lib/surfaces/openings'
 import type { HouseModel, Measurement, Project, SurfaceCalculation } from '@/lib/supabase/types'
 
 type RouteContext = { params: Promise<{ projectId: string }> }
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-type Side = 'front' | 'back' | 'left' | 'right'
+type Side = FacadeSide
 const ALL_SIDES: Side[] = ['front', 'back', 'left', 'right']
-const TYPE_PREFIX: Record<OpeningKind, string> = { window: 'W', door: 'D', garage: 'G' }
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { projectId } = await params
@@ -95,9 +95,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   // ── Détection façade par façade ──────────────────────────────────────────
-  const counters: Record<OpeningKind, number> = { window: 0, door: 0, garage: 0 }
-  const rowsToInsert: Record<string, unknown>[] = []
-  const perSide: Record<string, number> = {}
+  const placements: OpeningPlacement[] = []
+  const perSideDetected: Record<string, number> = {}
   const warnings: string[] = []
 
   for (const side of sides) {
@@ -114,55 +113,34 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       wallHeightFt: plan.height,
     })
     if (result.warning) warnings.push(`${side}: ${result.warning}`)
-    if (!result.wallFound) { perSide[side] = 0; continue }
+    if (!result.wallFound) { perSideDetected[side] = 0; continue }
 
-    perSide[side] = result.openings.length
+    perSideDetected[side] = result.openings.length
     for (const o of result.openings) {
-      counters[o.type] += 1
-      const surfaceType = o.type === 'garage' ? 'garage' : o.type // 'window' | 'door' | 'garage'
-      rowsToInsert.push({
-        project_id: projectId,
-        created_by: auth.user!.id,
-        facade_side: side,
-        surface_type: surfaceType,
-        label: `${TYPE_PREFIX[o.type]}${counters[o.type]}`,
-        gross_area: +(o.width * o.height).toFixed(3),
-        opening_area: 0,
-        length: o.width,
-        height: o.height,
-        position_x: o.position_x,
-        sill_height: o.sill_height,
-        detected_by: 'ai',
-        unit: plan.unit,
-        notes: `Détecté par IA (confiance ${(o.confidence * 100).toFixed(0)} %)`,
+      placements.push({
+        facade_side: side, type: o.type,
+        position_x: o.position_x, sill_height: o.sill_height,
+        width: o.width, height: o.height, confidence: o.confidence,
       })
     }
   }
 
-  // ── Remplace les détections IA précédentes pour ces façades ───────────────
-  const { error: delErr } = await supabase
-    .from('surface_calculations')
-    .delete()
-    .eq('project_id', projectId)
-    .eq('detected_by', 'ai')
-    .in('facade_side', sides)
-    .in('surface_type', ['window', 'door', 'garage'])
-  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 })
-
-  let inserted: SurfaceCalculation[] = []
-  if (rowsToInsert.length > 0) {
-    const { data, error: insErr } = await supabase
-      .from('surface_calculations').insert(rowsToInsert).select()
-    if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
-    inserted = (data as SurfaceCalculation[]) ?? []
+  // ── Persistance (remplace les détections IA précédentes pour ces façades) ──
+  let result
+  try {
+    result = await persistDetectedOpenings(supabase, {
+      projectId, userId: auth.user!.id, source: 'ai', unit: plan.unit, sides, openings: placements,
+    })
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
 
   return NextResponse.json({
-    detected: rowsToInsert.length,
-    perSide,
+    detected: result.count,
+    perSide: perSideDetected,
     sidesProcessed: sides.filter((s) => photoBySide.has(s)),
     dimensions: { width: plan.width, depth: plan.depth, wallHeight: plan.height, unit: plan.unit, estimated: plan.estimated },
     warnings,
-    surfaces: inserted,
+    surfaces: result.inserted,
   })
 }

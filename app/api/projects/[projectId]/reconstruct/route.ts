@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { requireProjectAccess } from '@/lib/api/access'
 import { runParametricReconstruction } from '@/lib/photogrammetry/reconstruct'
 import { isExternalConfigured, pollReconstruction, submitReconstruction } from '@/lib/photogrammetry/providers/external'
+import { persistDetectedOpenings } from '@/lib/surfaces/openings'
 
 type RouteContext = { params: Promise<{ projectId: string }> }
 export const runtime = 'nodejs'
@@ -114,12 +115,32 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       project_id: projectId, geometry_json: { method: 'external-dense' }, roof_type: 'gable',
       wall_height: null, footprint_json: null, generated_at: new Date().toISOString(), gltf_storage_path: fileName,
     })
+
+    // Ouvertures segmentées par le service → colonnes 015 (detected_by='photogrammetry').
+    let openingsDetected = 0
+    if (poll.openings && poll.openings.length > 0) {
+      try {
+        const { data: proj } = await supabase
+          .from('projects').select('unit_system').eq('id', projectId).single()
+        const unit = proj?.unit_system === 'metric' ? 'm' : 'ft'
+        const persisted = await persistDetectedOpenings(supabase, {
+          projectId, userId: auth.user?.id, source: 'photogrammetry', unit,
+          sides: ['front', 'back', 'left', 'right'],
+          openings: poll.openings,
+        })
+        openingsDetected = persisted.count
+      } catch (e) {
+        console.error('Persistance ouvertures photogrammétrie:', (e as Error).message)
+      }
+    }
+
     await supabase.from('project_processing_jobs').update({
       status: 'completed', progress: 100, current_step: 'Modèle dense reçu',
-      output_data: { gltf_storage_path: fileName, provider: 'external' }, completed_at: new Date().toISOString(),
+      output_data: { gltf_storage_path: fileName, provider: 'external', openings_detected: openingsDetected },
+      completed_at: new Date().toISOString(),
     }).eq('id', jobId)
     const url = await signedModelUrl(admin, fileName)
-    return NextResponse.json({ status: 'completed', gltfUrl: url })
+    return NextResponse.json({ status: 'completed', gltfUrl: url, openingsDetected })
   } catch (e) {
     return NextResponse.json({ status: 'failed', error: e instanceof Error ? e.message : 'Téléchargement échoué' }, { status: 502 })
   }

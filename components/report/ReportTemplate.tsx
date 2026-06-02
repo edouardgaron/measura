@@ -239,17 +239,27 @@ function Compass() {
 }
 
 function ElevationDiagram({
-  sideWidthFt, wallHeightFt, pitch, roofType, openings, imperial,
+  sideWidthFt, wallHeightFt, pitch, roofType, openings, imperial, isGableEnd = true,
 }: {
   sideWidthFt: number; wallHeightFt: number; pitch: number
   roofType: string | null; openings: ReportSurface[]; imperial: boolean
+  // Pignon (triangle) seulement sur les façades pignons (avant/arrière par défaut) ;
+  // les façades de gouttereau (côtés) montrent le profil d'avant-toit.
+  isGableEnd?: boolean
 }) {
   const W = 500, mX = 38, mTop = 16, mBot = 30
   const drawW = W - mX * 2
   const scale = sideWidthFt > 0 ? drawW / sideWidthFt : 4
   const wallPx = Math.max(wallHeightFt * scale, 50)
-  const gableFt = roofType === 'flat' ? 0 : (sideWidthFt / 2) * (pitch / 12)
-  const gablePx = Math.min(gableFt * scale, 110)
+  const gableFt = (sideWidthFt / 2) * (pitch / 12)
+
+  // Hauteur du toit dessiné selon le type de toit et l'orientation de la façade.
+  let gablePx: number
+  if (roofType === 'flat') gablePx = 8
+  else if (roofType === 'shed') gablePx = Math.min(gableFt * scale, 90)
+  else if (roofType === 'hip') gablePx = Math.min(gableFt * scale * 0.7, 90)
+  else gablePx = isGableEnd ? Math.min(gableFt * scale, 110) : 16 // gable
+
   const H = mTop + gablePx + wallPx + mBot
   const xL = mX, xR = mX + drawW
   const yRoofTop = mTop
@@ -258,12 +268,26 @@ function ElevationDiagram({
   const cx = (xL + xR) / 2
   const len = (ft: number) => (imperial ? fmtFtIn(ft) : `${ft.toFixed(1)} m`)
 
-  // Roof shape
+  // Forme du toit
   let roof: React.ReactNode = null
   if (roofType === 'flat') {
     roof = <Rect x={xL - 4} y={yWallTop - 8} width={drawW + 8} height={8} fill="#d9d9d9" stroke={INK} strokeWidth={1} />
-  } else {
+  } else if (roofType === 'shed') {
+    roof = <Polygon points={`${xL},${yRoofTop} ${xR},${yWallTop} ${xR},${yWallTop} ${xL},${yWallTop}`} fill="#ededed" stroke={INK} strokeWidth={1} />
+  } else if (roofType === 'hip') {
+    const inset = drawW * 0.24
+    roof = <Polygon points={`${xL},${yWallTop} ${xL + inset},${yRoofTop} ${xR - inset},${yRoofTop} ${xR},${yWallTop}`} fill="#ededed" stroke={INK} strokeWidth={1} />
+  } else if (isGableEnd) {
+    // Pignon : triangle
     roof = <Polygon points={`${xL},${yWallTop} ${cx},${yRoofTop} ${xR},${yWallTop}`} fill="#ededed" stroke={INK} strokeWidth={1} />
+  } else {
+    // Gouttereau : profil d'avant-toit (bandeau + ligne de faîte en débord)
+    roof = (
+      <G>
+        <Rect x={xL - 6} y={yWallTop - gablePx} width={drawW + 12} height={gablePx} fill="#f0f0f0" stroke={INK} strokeWidth={1} />
+        <Line x1={xL - 6} y1={yWallTop - gablePx} x2={xR + 6} y2={yWallTop - gablePx} stroke={INK} strokeWidth={0.8} />
+      </G>
+    )
   }
 
   // Une ouverture est « positionnée » si on connaît son décalage horizontal
@@ -298,10 +322,13 @@ function ElevationDiagram({
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
       {roof}
       <Rect x={xL} y={yWallTop} width={drawW} height={wallPx} fill="#f4f4f4" stroke={INK} strokeWidth={1} />
-      {opGeom.map(({ o, x, y, w, h }) => (
+      {opGeom.map(({ o, x, y, w, h }, i) => (
         <G key={o.id}>
           <Rect x={x} y={y} width={w} height={h} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
-          {svgText(x + w / 2, y - 2, o.label ?? '', { size: 5.5, fill: GREY })}
+          {/* pastille numérotée (style Hover) */}
+          <Circle cx={x} cy={y} r={6.5} fill={INK} stroke="#ffffff" strokeWidth={0.8} />
+          <Text x={x} y={y + 2.3} style={{ fontFamily: 'Helvetica-Bold', fontSize: 6.5 }} fill="#ffffff" textAnchor="middle">{String(i + 1)}</Text>
+          {svgText(x + w / 2, y - 4, o.label ?? '', { size: 5, fill: GREY })}
         </G>
       ))}
       {/* cote largeur */}
@@ -577,6 +604,7 @@ export default function ReportTemplate(props: ReportTemplateProps) {
                     roofType={data.footprint.roofType}
                     openings={ops}
                     imperial={data.imperial}
+                    isGableEnd={e.side === 'front' || e.side === 'back'}
                   />
                 </View>
                 <Text style={{ fontSize: 7.5, color: GREY, marginTop: 2 }}>

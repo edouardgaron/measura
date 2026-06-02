@@ -237,6 +237,7 @@ export default function ElevationsPage({ params }: Props) {
             wallHeightFt={dims.wallHeight}
             imperial={dims.imperial}
             roofType={roofType}
+            isGableEnd={side === 'front' || side === 'back'}
             openings={openings.filter((o) => o.facade_side === side)}
             detecting={detecting === side}
             disabledDetect={detecting !== null}
@@ -266,7 +267,7 @@ function fmt(ft: number, imperial: boolean): string {
 
 // ── Panneau d'une façade ───────────────────────────────────────────────────────
 function FacadePanel({
-  side, label, widthFt, wallHeightFt, imperial, roofType, openings,
+  side, label, widthFt, wallHeightFt, imperial, roofType, isGableEnd, openings,
   detecting, disabledDetect, onDetect, onAdd, onDragLocal, onDragCommit, onFieldCommit, onDelete,
 }: {
   side: Side
@@ -275,6 +276,7 @@ function FacadePanel({
   wallHeightFt: number
   imperial: boolean
   roofType: string | null
+  isGableEnd: boolean
   openings: Opening[]
   detecting: boolean
   disabledDetect: boolean
@@ -295,7 +297,12 @@ function FacadePanel({
   const wh = wallHeightFt > 0 ? wallHeightFt : 9
   const scale = drawW / sw
   const wallPx = Math.max(wh * scale, 60)
-  const gablePx = roofType === 'flat' ? 10 : Math.min((sw / 2) * 0.5 * scale, 90)
+  const gableFt = (sw / 2) * 0.5
+  let gablePx: number
+  if (roofType === 'flat') gablePx = 8
+  else if (roofType === 'shed') gablePx = Math.min(gableFt * scale, 80)
+  else if (roofType === 'hip') gablePx = Math.min(gableFt * scale * 0.7, 80)
+  else gablePx = isGableEnd ? Math.min(gableFt * scale, 90) : 14 // gable
   const H = mTop + gablePx + wallPx + mBot
   const xL = mX, xR = mX + drawW
   const yWallTop = mTop + gablePx
@@ -372,23 +379,34 @@ function FacadePanel({
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
       >
-        {/* Toit */}
-        {roofType === 'flat'
-          ? <rect x={xL - 4} y={yWallTop - 8} width={drawW + 8} height={8} fill="#d9d9d9" stroke="#111" strokeWidth={1} />
-          : <polygon points={`${xL},${yWallTop} ${(xL + xR) / 2},${mTop} ${xR},${yWallTop}`} fill="#ededed" stroke="#111" strokeWidth={1} />}
+        {/* Toit : pignon (triangle) sur avant/arrière, profil d'avant-toit sur les côtés */}
+        {roofType === 'flat' ? (
+          <rect x={xL - 4} y={yWallTop - 8} width={drawW + 8} height={8} fill="#d9d9d9" stroke="#111" strokeWidth={1} />
+        ) : roofType === 'hip' ? (
+          <polygon points={`${xL},${yWallTop} ${xL + drawW * 0.24},${mTop} ${xR - drawW * 0.24},${mTop} ${xR},${yWallTop}`} fill="#ededed" stroke="#111" strokeWidth={1} />
+        ) : roofType === 'shed' ? (
+          <polygon points={`${xL},${mTop} ${xR},${yWallTop} ${xL},${yWallTop}`} fill="#ededed" stroke="#111" strokeWidth={1} />
+        ) : isGableEnd ? (
+          <polygon points={`${xL},${yWallTop} ${(xL + xR) / 2},${mTop} ${xR},${yWallTop}`} fill="#ededed" stroke="#111" strokeWidth={1} />
+        ) : (
+          <rect x={xL - 6} y={yWallTop - gablePx} width={drawW + 12} height={gablePx} fill="#f0f0f0" stroke="#111" strokeWidth={1} />
+        )}
         {/* Mur */}
         <rect x={xL} y={yWallTop} width={drawW} height={wallPx} fill="#f4f4f4" stroke="#111" strokeWidth={1} />
         {/* Sol */}
         <line x1={xL - 6} y1={yWallBot} x2={xR + 6} y2={yWallBot} stroke="#111" strokeWidth={1.4} />
         {/* Ouvertures */}
-        {openings.map((o) => {
+        {openings.map((o, i) => {
           const g = geom(o)
           const fill = o.surface_type === 'window' ? '#ffffff' : o.surface_type === 'door' ? '#e9e2d4' : '#dde7ef'
           return (
             <g key={o.id} onPointerDown={(e) => onPointerDown(e, o)} style={{ cursor: 'grab' }}>
               <rect x={g.x} y={g.y} width={g.w} height={g.h} fill={fill} stroke="#111" strokeWidth={1}
                 strokeDasharray={g.placed ? undefined : '3 2'} rx={1} />
-              <text x={g.x + g.w / 2} y={g.y - 2} fontSize={7} textAnchor="middle" fill="#6b7280">{o.label ?? ''}</text>
+              {/* pastille numérotée */}
+              <circle cx={g.x} cy={g.y} r={7} fill="#111" stroke="#fff" strokeWidth={1} />
+              <text x={g.x} y={g.y + 2.5} fontSize={7.5} fontWeight="bold" textAnchor="middle" fill="#fff">{i + 1}</text>
+              <text x={g.x + g.w / 2} y={g.y - 4} fontSize={6.5} textAnchor="middle" fill="#6b7280">{o.label ?? ''}</text>
             </g>
           )
         })}
