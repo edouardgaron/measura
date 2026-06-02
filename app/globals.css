@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Force light mode everywhere (Hover is light-only).
+   By default Tailwind v4 maps `dark:` to prefers-color-scheme, which made the
+   app render half-dark on a dark OS. Bind `dark:` to an explicit `.dark` class
+   (never added) so every `dark:` variant stays inert and the UI is fully light. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================================
    Measura — Hover-style design system (strict black & white)
    ------------------------------------------------------------
@@ -46,6 +52,7 @@
 
 :root {
   --font-inter: 'Inter', sans-serif;
+  color-scheme: light;
 }
 
 *, *::before, *::after {
