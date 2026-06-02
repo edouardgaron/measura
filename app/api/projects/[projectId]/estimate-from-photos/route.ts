@@ -58,16 +58,13 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   }
 
   // ── house_models (footprint rectangulaire + toit) ────────────────────────
-  // Purge les estimations IA précédentes (évite l'accumulation ; conserve un
-  // éventuel modèle dense/manuel d'une autre méthode).
-  await supabase.from('house_models').delete()
-    .eq('project_id', projectId).filter('geometry_json->>method', 'eq', 'ai-photo-estimate')
-
+  // Unique par projet → upsert (remplace le modèle existant, quelle que soit
+  // sa méthode). On conserve le chemin glTF existant si présent (re-générable).
   const facadeConfidence: Record<string, number> = {}
   for (const f of est.facades) facadeConfidence[f.facade_side] = f.confidence
 
   const footprint: [number, number][] = [[0, 0], [est.width, 0], [est.width, est.depth], [0, est.depth]]
-  await supabase.from('house_models').insert({
+  await supabase.from('house_models').upsert({
     project_id: projectId,
     geometry_json: {
       method: 'ai-photo-estimate',
@@ -80,7 +77,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     wall_height: est.wall_height,
     footprint_json: footprint,
     generated_at: new Date().toISOString(),
-  })
+  }, { onConflict: 'project_id' })
 
   // ── Murs par façade (remplace les murs estimés par IA précédents) ─────────
   await supabase.from('surface_calculations').delete()

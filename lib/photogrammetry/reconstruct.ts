@@ -111,9 +111,10 @@ export async function runParametricReconstruction(
     [0, 0], [plan.width, 0], [plan.width, plan.depth], [0, plan.depth],
   ]
 
+  // house_models est unique par projet → upsert (remplace le modèle existant).
   const { data: model, error: insErr } = await supabase
     .from('house_models')
-    .insert({
+    .upsert({
       project_id: projectId,
       geometry_json: { method: 'parametric', boxes: boxes.length, triangles, width: plan.width, depth: plan.depth, height: plan.height },
       roof_type: roofType,
@@ -121,7 +122,7 @@ export async function runParametricReconstruction(
       footprint_json: footprint,
       generated_at: new Date().toISOString(),
       gltf_storage_path: fileName,
-    })
+    }, { onConflict: 'project_id' })
     .select('id')
     .single()
   if (insErr || !model) throw new Error(insErr?.message ?? 'Échec enregistrement modèle')

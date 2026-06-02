@@ -20,8 +20,8 @@ VALUES
     'reports',
     'reports',
     false,                          -- privé
-    10485760,                       -- 10 MB max
-    ARRAY['application/pdf']
+    52428800,                       -- 50 MB max (PDF + modèles 3D glTF/GLB)
+    ARRAY['application/pdf','model/gltf+json','model/gltf-binary','application/octet-stream']
   ),
   (
     'avatars',

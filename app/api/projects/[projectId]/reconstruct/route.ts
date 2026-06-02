@@ -111,10 +111,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     await admin.storage.from('reports').upload(fileName, Buffer.from(arrayBuf), {
       contentType: ext === 'glb' ? 'model/gltf-binary' : 'model/gltf+json', upsert: false,
     })
-    await supabase.from('house_models').insert({
+    await supabase.from('house_models').upsert({
       project_id: projectId, geometry_json: { method: 'external-dense' }, roof_type: 'gable',
       wall_height: null, footprint_json: null, generated_at: new Date().toISOString(), gltf_storage_path: fileName,
-    })
+    }, { onConflict: 'project_id' })
 
     // Ouvertures segmentées par le service → colonnes 015 (detected_by='photogrammetry').
     let openingsDetected = 0
