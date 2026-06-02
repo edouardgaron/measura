@@ -9,7 +9,7 @@
 import React from 'react'
 import {
   Document, Page, Text, View, Image, StyleSheet,
-  Svg, Polygon, Line,
+  Svg, Polygon, Line, Rect, Circle, G, Path,
 } from '@react-pdf/renderer'
 import type { Project, Measurement, Photo, FacadeLabel } from '@/lib/supabase/types'
 import {
@@ -181,22 +181,169 @@ function Row({ cells, alt, total }: { cells: { v: string; flex: number; right?: 
   )
 }
 
-function FootprintDiagram({ points }: { points: [number, number][] }) {
-  const W = 230, H = 230, pad = 24
+function svgText(x: number, y: number, s: string, opts?: { anchor?: 'start' | 'middle' | 'end'; size?: number; fill?: string; bold?: boolean }) {
+  return (
+    <Text
+      x={x} y={y}
+      style={{ fontFamily: opts?.bold ? 'Helvetica-Bold' : 'Helvetica', fontSize: opts?.size ?? 7 }}
+      fill={opts?.fill ?? GREY}
+      textAnchor={opts?.anchor ?? 'middle'}
+    >{s}</Text>
+  )
+}
+
+function FootprintDiagram({ points, imperial }: { points: [number, number][]; imperial: boolean }) {
+  const W = 300, H = 260, pad = 40
   const xs = points.map((p) => p[0]); const ys = points.map((p) => p[1])
   const minX = Math.min(...xs), maxX = Math.max(...xs)
   const minY = Math.min(...ys), maxY = Math.max(...ys)
+  const wFt = maxX - minX, dFt = maxY - minY
+  const span = Math.max(wFt, dFt) || 1
+  const scale = (Math.min(W, H) - pad * 2) / span
+  const ox = (W - wFt * scale) / 2
+  const oy = (H - dFt * scale) / 2
+  const proj = points.map(([x, y]) => [ox + (x - minX) * scale, H - (oy + (y - minY) * scale)] as [number, number])
+  const poly = proj.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')
+  const left = ox, right = ox + wFt * scale
+  const top = H - (oy + dFt * scale), bot = H - oy
+  const len = (ft: number) => (imperial ? fmtFtIn(ft) : `${ft.toFixed(1)} m`)
+  return (
+    <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      <Polygon points={poly} fill={SOFT} stroke={INK} strokeWidth={1.3} />
+      {/* cote largeur (bas) */}
+      <Line x1={left} y1={bot + 12} x2={right} y2={bot + 12} stroke={LIGHT} strokeWidth={0.6} />
+      <Line x1={left} y1={bot + 8} x2={left} y2={bot + 16} stroke={LIGHT} strokeWidth={0.6} />
+      <Line x1={right} y1={bot + 8} x2={right} y2={bot + 16} stroke={LIGHT} strokeWidth={0.6} />
+      {svgText((left + right) / 2, bot + 22, len(wFt), { fill: INK })}
+      {/* cote profondeur (droite) */}
+      <Line x1={right + 12} y1={top} x2={right + 12} y2={bot} stroke={LIGHT} strokeWidth={0.6} />
+      {svgText(right + 16, (top + bot) / 2, len(dFt), { anchor: 'start', fill: INK })}
+      {/* étiquettes avant / arrière */}
+      {svgText((left + right) / 2, top - 6, 'ARRIÈRE', { size: 6.5 })}
+      {svgText((left + right) / 2, bot + 34, 'AVANT', { size: 6.5 })}
+    </Svg>
+  )
+}
+
+function Compass() {
+  return (
+    <Svg width={56} height={56} viewBox="0 0 56 56">
+      <Line x1={10} y1={46} x2={46} y2={10} stroke={INK} strokeWidth={0.8} />
+      <Line x1={10} y1={10} x2={46} y2={46} stroke={INK} strokeWidth={0.8} />
+      {svgText(28, 8, 'N', { size: 7, fill: INK, bold: true })}
+      {svgText(52, 30, 'E', { size: 7, fill: INK, bold: true })}
+      {svgText(28, 54, 'S', { size: 7, fill: INK, bold: true })}
+      {svgText(4, 30, 'O', { size: 7, fill: INK, bold: true })}
+    </Svg>
+  )
+}
+
+function ElevationDiagram({
+  sideWidthFt, wallHeightFt, pitch, roofType, openings, imperial,
+}: {
+  sideWidthFt: number; wallHeightFt: number; pitch: number
+  roofType: string | null; openings: ReportSurface[]; imperial: boolean
+}) {
+  const W = 500, mX = 38, mTop = 16, mBot = 30
+  const drawW = W - mX * 2
+  const scale = sideWidthFt > 0 ? drawW / sideWidthFt : 4
+  const wallPx = Math.max(wallHeightFt * scale, 50)
+  const gableFt = roofType === 'flat' ? 0 : (sideWidthFt / 2) * (pitch / 12)
+  const gablePx = Math.min(gableFt * scale, 110)
+  const H = mTop + gablePx + wallPx + mBot
+  const xL = mX, xR = mX + drawW
+  const yRoofTop = mTop
+  const yWallTop = mTop + gablePx
+  const yWallBot = yWallTop + wallPx
+  const cx = (xL + xR) / 2
+  const len = (ft: number) => (imperial ? fmtFtIn(ft) : `${ft.toFixed(1)} m`)
+
+  // Roof shape
+  let roof: React.ReactNode = null
+  if (roofType === 'flat') {
+    roof = <Rect x={xL - 4} y={yWallTop - 8} width={drawW + 8} height={8} fill="#d9d9d9" stroke={INK} strokeWidth={1} />
+  } else {
+    roof = <Polygon points={`${xL},${yWallTop} ${cx},${yRoofTop} ${xR},${yWallTop}`} fill="#ededed" stroke={INK} strokeWidth={1} />
+  }
+
+  // Openings laid out in a row
+  const ops = openings.slice(0, 9)
+  const widths = ops.map((o) => Math.max((o.length ?? 1) * scale, 6))
+  const totalW = widths.reduce((a, b) => a + b, 0)
+  const space = ops.length ? (drawW - totalW) / (ops.length + 1) : 0
+  let penX = xL + space
+
+  return (
+    <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      {roof}
+      <Rect x={xL} y={yWallTop} width={drawW} height={wallPx} fill="#f4f4f4" stroke={INK} strokeWidth={1} />
+      {ops.map((o, i) => {
+        const w = widths[i]
+        const h = Math.min((o.height ?? 1) * scale, wallPx * 0.78)
+        const x = penX
+        const y = yWallBot - h - wallPx * 0.12
+        penX += w + space
+        return (
+          <G key={o.id}>
+            <Rect x={x} y={y} width={w} height={h} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
+            {svgText(x + w / 2, y - 2, o.label ?? '', { size: 5.5, fill: GREY })}
+          </G>
+        )
+      })}
+      {/* cote largeur */}
+      <Line x1={xL} y1={yWallBot + 12} x2={xR} y2={yWallBot + 12} stroke={LIGHT} strokeWidth={0.6} />
+      <Line x1={xL} y1={yWallBot + 8} x2={xL} y2={yWallBot + 16} stroke={LIGHT} strokeWidth={0.6} />
+      <Line x1={xR} y1={yWallBot + 8} x2={xR} y2={yWallBot + 16} stroke={LIGHT} strokeWidth={0.6} />
+      {svgText(cx, yWallBot + 22, len(sideWidthFt), { fill: INK })}
+      {/* cote hauteur */}
+      <Line x1={xL - 12} y1={yWallTop} x2={xL - 12} y2={yWallBot} stroke={LIGHT} strokeWidth={0.6} />
+      {svgText(xL - 16, (yWallTop + yWallBot) / 2, len(wallHeightFt), { anchor: 'end', fill: INK })}
+    </Svg>
+  )
+}
+
+function RoofTopDiagram({ points, totalArea, areaUnit }: { points: [number, number][] | null; totalArea: number; areaUnit: string }) {
+  const W = 300, H = 240, pad = 30
+  if (!points || points.length < 3) {
+    return (
+      <View style={{ width: W, height: H, backgroundColor: SOFT, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: LIGHT, fontSize: 9 }}>Schéma de toiture indisponible</Text>
+      </View>
+    )
+  }
+  const xs = points.map((p) => p[0]); const ys = points.map((p) => p[1])
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
   const span = Math.max(maxX - minX, maxY - minY) || 1
   const scale = (Math.min(W, H) - pad * 2) / span
   const ox = (W - (maxX - minX) * scale) / 2
   const oy = (H - (maxY - minY) * scale) / 2
-  // flip Y so "front" (min y) is at bottom
   const proj = points.map(([x, y]) => [ox + (x - minX) * scale, H - (oy + (y - minY) * scale)] as [number, number])
   const poly = proj.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')
+  const cxp = ox + ((maxX - minX) / 2) * scale
   return (
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      <Polygon points={poly} fill={SOFT} stroke={INK} strokeWidth={1.4} />
-      <Line x1={W / 2} y1={6} x2={W / 2} y2={16} stroke={LIGHT} strokeWidth={0.8} />
+      <Polygon points={poly} fill="#f0f0f0" stroke={INK} strokeWidth={1.2} />
+      {/* faîte central */}
+      <Line x1={cxp} y1={H - oy - (maxY - minY) * scale} x2={cxp} y2={H - oy} stroke={INK} strokeWidth={0.9} />
+      {svgText(cxp, H / 2, `${Math.round(totalArea)} ${areaUnit}`, { fill: INK, bold: true, size: 8 })}
+    </Svg>
+  )
+}
+
+function IsoHouse() {
+  // Petite maison isométrique schématique (massing)
+  return (
+    <Svg width={200} height={150} viewBox="0 0 200 150">
+      {/* mur gauche */}
+      <Polygon points="40,70 100,100 100,140 40,110" fill="#ededed" stroke={INK} strokeWidth={1} />
+      {/* mur droit */}
+      <Polygon points="100,100 160,70 160,110 100,140" fill="#f6f6f6" stroke={INK} strokeWidth={1} />
+      {/* toit gauche */}
+      <Polygon points="40,70 100,40 100,100" fill="#dcdcdc" stroke={INK} strokeWidth={1} />
+      {/* toit droit */}
+      <Polygon points="100,40 160,70 100,100" fill="#e7e7e7" stroke={INK} strokeWidth={1} />
+      <Circle cx={70} cy={92} r={6} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
+      <Circle cx={130} cy={92} r={6} fill="#ffffff" stroke={INK} strokeWidth={0.8} />
     </Svg>
   )
 }
@@ -303,6 +450,12 @@ export default function ReportTemplate(props: ReportTemplateProps) {
           <Stat value={String(data.roofFacets.length)} label="Facettes" />
         </View>
 
+        {data.footprint.points && data.footprint.points.length > 2 && (
+          <View style={{ alignItems: 'center', marginVertical: 6 }}>
+            <RoofTopDiagram points={data.footprint.points} totalArea={data.roofTotalArea} areaUnit={data.areaUnit} />
+          </View>
+        )}
+
         <Text style={styles.subTitle}>Facettes de toiture</Text>
         <Th cols={[{ label: 'Facette', flex: 3 }, { label: 'Pente', flex: 1.5 }, { label: 'Aire', flex: 2, right: true }]} />
         {data.roofFacets.length === 0 ? (
@@ -344,14 +497,15 @@ export default function ReportTemplate(props: ReportTemplateProps) {
         <View style={styles.fpWrap}>
           <View>
             {data.footprint.points && data.footprint.points.length > 2 ? (
-              <FootprintDiagram points={data.footprint.points} />
+              <FootprintDiagram points={data.footprint.points} imperial={data.imperial} />
             ) : (
-              <View style={{ width: 230, height: 230, backgroundColor: SOFT, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 300, height: 260, backgroundColor: SOFT, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: LIGHT, fontSize: 9 }}>Empreinte non disponible</Text>
               </View>
             )}
           </View>
           <View style={{ flex: 1 }}>
+            <View style={{ alignItems: 'flex-end', marginBottom: 8 }}><Compass /></View>
             <InfoLine label="Nombre d'étages" value={String(data.footprint.stories)} />
             <InfoLine label="Périmètre" value={data.footprint.perimeter > 0 ? fmtLen(data.footprint.perimeter, data.imperial) : '—'} />
             <InfoLine label="Aire au sol" value={data.footprint.area > 0 ? fmtArea(data.footprint.area, data.areaUnit) : '—'} />
@@ -370,6 +524,69 @@ export default function ReportTemplate(props: ReportTemplateProps) {
           </>
         )}
 
+        <Footer companyName={companyName} generatedOn={gen} />
+      </Page>
+
+      {/* ── Élévations (schémas) ───────────────────────────────────────────── */}
+      {data.dims.width > 0 && [
+        [
+          { side: 'front', label: 'AVANT', width: data.dims.width },
+          { side: 'right', label: 'DROITE', width: data.dims.depth },
+        ],
+        [
+          { side: 'back', label: 'ARRIÈRE', width: data.dims.width },
+          { side: 'left', label: 'GAUCHE', width: data.dims.depth },
+        ],
+      ].map((pair, pi) => (
+        <Page key={`elev-${pi}`} size="A4" style={styles.page}>
+          <TopBar brand={brand} title={project.title} address={address} tag="Élévations" />
+          {pi === 0 && <Text style={styles.sectionTitle}>Élévations</Text>}
+          {pair.map((e) => {
+            const ops = data.openingsBySide[e.side] ?? []
+            return (
+              <View key={e.side} style={{ marginBottom: 16 }} wrap={false}>
+                <Text style={styles.subTitle}>{e.label}</Text>
+                <View style={{ alignItems: 'center' }}>
+                  <ElevationDiagram
+                    sideWidthFt={e.width}
+                    wallHeightFt={data.dims.wallHeight}
+                    pitch={data.dims.pitch}
+                    roofType={data.footprint.roofType}
+                    openings={ops}
+                    imperial={data.imperial}
+                  />
+                </View>
+                <Text style={{ fontSize: 7.5, color: GREY, marginTop: 2 }}>
+                  {ops.length} ouverture(s) · schéma proportionnel (positions approximatives)
+                </Text>
+              </View>
+            )
+          })}
+          <Footer companyName={companyName} generatedOn={gen} />
+        </Page>
+      ))}
+
+      {/* ── Clé des mesures ────────────────────────────────────────────────── */}
+      <Page size="A4" style={styles.page}>
+        <TopBar brand={brand} title={project.title} address={address} tag="Clé des mesures" />
+        <Text style={styles.sectionTitle}>Clé des mesures</Text>
+        <View style={{ flexDirection: 'row', gap: 20, marginTop: 6 }}>
+          <View style={{ flex: 1 }}>
+            {[
+              'Mur (revêtement)', 'Pignon', 'Avant-toit / fascia', 'Soffite',
+              'Rive (rake)', 'Garniture verticale', 'Coin extérieur', 'Ouverture (fenêtre / porte)',
+            ].map((label, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 0.6, borderBottomColor: LINE }}>
+                <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: i % 2 ? '#dcdcdc' : '#ededed', borderWidth: 0.8, borderColor: INK, marginRight: 8 }} />
+                <Text style={{ fontSize: 9 }}>{label}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <IsoHouse />
+            <Text style={{ fontSize: 7.5, color: GREY, marginTop: 6 }}>Modèle volumétrique (massing)</Text>
+          </View>
+        </View>
         <Footer companyName={companyName} generatedOn={gen} />
       </Page>
 

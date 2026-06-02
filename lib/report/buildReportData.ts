@@ -84,6 +84,17 @@ export interface ReportData {
     stories: number
     roofType: string | null
   }
+
+  // Géométrie pour les schémas d'élévation
+  dims: {
+    width: number // façade avant/arrière
+    depth: number // façades latérales
+    wallHeight: number
+    pitch: number // pente dominante (x/12)
+  }
+
+  // Ouvertures regroupées par élévation (pour les schémas)
+  openingsBySide: Record<string, ReportSurface[]>
 }
 
 const SIDES: Array<NonNullable<ReportSurface['facade_side']>> = [
@@ -193,6 +204,22 @@ export function buildReportData(
     roofType: houseModel?.roof_type ?? null,
   }
 
+  // Dimensions (depuis l'empreinte) pour les schémas d'élévation
+  const xs2 = pts && pts.length ? pts.map((p) => p[0]) : []
+  const ys2 = pts && pts.length ? pts.map((p) => p[1]) : []
+  const width = xs2.length ? Math.max(...xs2) - Math.min(...xs2) : 0
+  const depth = ys2.length ? Math.max(...ys2) - Math.min(...ys2) : 0
+  const wallHeight = houseModel?.wall_height ?? (imperial ? 9 : 2.7)
+  const pitch = roofPitchBreakdown[0]?.pitch ?? (footprint.roofType === 'flat' ? 0 : 6)
+  const dims = { width, depth, wallHeight, pitch }
+
+  // Ouvertures par élévation
+  const openingsBySide: Record<string, ReportSurface[]> = {}
+  for (const o of [...windows, ...doors]) {
+    const k = o.facade_side ?? 'front'
+    ;(openingsBySide[k] ??= []).push(o)
+  }
+
   return {
     imperial,
     areaUnit,
@@ -217,5 +244,7 @@ export function buildReportData(
     sidingWaste,
     roofWaste,
     footprint,
+    dims,
+    openingsBySide,
   }
 }
