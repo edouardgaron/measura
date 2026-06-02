@@ -1,7 +1,7 @@
 // app/(dashboard)/projects/[projectId]/estimate/page.tsx
 'use client'
 
-import { use, useState, useCallback } from 'react'
+import { use, useState, useCallback, useEffect } from 'react'
 import {
   Layers,
   Package,
@@ -170,6 +170,35 @@ export default function EstimatePage({ params }: Props) {
   const [savingEstimate, setSavingEstimate] = useState(false)
   const [estimateSaved, setEstimateSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Pré-remplissage depuis l'onglet Élévations (« Créer l'estimation ») :
+  // dimensions + ouvertures issues des photos → calcul des surfaces au montage.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('fromPhotos') !== '1') return
+    const rt = p.get('roofType') ?? 'gable'
+    const next: HouseDimensions = {
+      width: p.get('width') ?? '',
+      depth: p.get('depth') ?? '',
+      wallHeight: p.get('wallHeight') ?? '9',
+      roofType: (['gable', 'hip', 'flat', 'shed'].includes(rt) ? rt : 'gable') as HouseDimensions['roofType'],
+      pitchRise: p.get('pitch') ?? '5',
+      overhang: '1',
+      doors: p.get('doors') ?? '0',
+      windows: p.get('windows') ?? '0',
+      garages: p.get('garages') ?? '0',
+    }
+    setDims(next)
+    const w = n(next.width), d = n(next.depth), h = n(next.wallHeight, 9)
+    if (w > 0 && d > 0) {
+      setSurfaceResults(calcExteriorSummary({
+        width: w, depth: d, wallHeight: h, roofType: next.roofType,
+        pitchRise: n(next.pitchRise, 5), overhang: 1,
+        openings: { doors: n(next.doors), windows: n(next.windows), garages: n(next.garages) },
+      }))
+    }
+  }, [])
 
   // ─────────────────────────────────────────────────────────────────────────
   // SURFACES TAB

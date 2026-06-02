@@ -10,9 +10,21 @@
 'use client'
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
-import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info, Box, Calculator } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
+import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info, Box, Calculator, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { buildReportData, type ReportSurface, type HouseModelLike } from '@/lib/report/buildReportData'
+
+// Viewer 3D procédural (three.js) — chargé côté client uniquement.
+const ModelViewer = dynamic(() => import('@/components/model3d/ModelViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-80 items-center justify-center rounded-lg bg-neutral-50 text-sm text-neutral-400 dark:bg-neutral-900">
+      Chargement de l’aperçu 3D…
+    </div>
+  ),
+})
 
 interface Props { params: Promise<{ projectId: string }> }
 
@@ -55,7 +67,10 @@ export default function ElevationsPage({ params }: Props) {
   const [detecting, setDetecting] = useState<Side | 'all' | null>(null)
   const [estimating, setEstimating] = useState(false)
   const [building3d, setBuilding3d] = useState(false)
+  const [show3d, setShow3d] = useState(false)
+  const [colors, setColors] = useState({ walls: '#9aa0a6', roof: '#5b5b5b', trim: '#ffffff' })
   const [toast, setToast] = useState<string | null>(null)
+  const router = useRouter()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -244,6 +259,23 @@ export default function ElevationsPage({ params }: Props) {
     }
   }
 
+  // Pré-remplit l'onglet Estimation avec les dimensions/ouvertures issues des photos.
+  const goToEstimate = () => {
+    const count = (t: OpeningType) => openings.filter((o) => o.surface_type === t).length
+    const q = new URLSearchParams({
+      fromPhotos: '1',
+      width: String(Math.round(dims.width)),
+      depth: String(Math.round(dims.depth)),
+      wallHeight: String(Math.round(dims.wallHeight)),
+      roofType: roofType ?? 'gable',
+      pitch: String(Math.round(roofPitch)),
+      doors: String(count('door')),
+      windows: String(count('window')),
+      garages: String(count('garage')),
+    })
+    router.push(`/projects/${projectId}/estimate?${q.toString()}`)
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-neutral-400" /></div>
   }
@@ -353,7 +385,41 @@ export default function ElevationsPage({ params }: Props) {
         ))}
       </div>
 
-      {summary && <SurfaceSummary data={summary} />}
+      {/* Aperçu 3D (modèle procédural à partir des dimensions estimées) */}
+      {!noDims && (
+        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Box className="h-5 w-5 text-neutral-700 dark:text-neutral-300" />
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Aperçu 3D</h3>
+            </div>
+            <button
+              onClick={() => setShow3d((s) => !s)}
+              className="rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+            >
+              {show3d ? 'Masquer' : 'Afficher l’aperçu 3D'}
+            </button>
+          </div>
+          {show3d && (
+            <>
+              <div className="h-80 overflow-hidden rounded-lg">
+                <ModelViewer
+                  measurements={{ width: dims.width, depth: dims.depth, height: dims.wallHeight }}
+                  roofType={(roofType as 'gable' | 'hip' | 'flat' | 'shed') ?? 'gable'}
+                  colors={colors}
+                  onColorsChange={setColors}
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-neutral-400">
+                Volume reconstruit depuis les dimensions estimées ({fmt(dims.width, dims.imperial)} × {fmt(dims.depth, dims.imperial)} × {fmt(dims.wallHeight, dims.imperial)}).
+                « Générer le modèle 3D » exporte un glTF (onglet Modèle 3D).
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {summary && <SurfaceSummary data={summary} onCreateEstimate={goToEstimate} />}
     </div>
   )
 }
@@ -374,16 +440,16 @@ const CAD = (n: number) =>
 const rndArea = (n: number) => Math.round(n).toLocaleString('fr-CA')
 const squares = (n: number) => (Math.round((n / 100) * 10) / 10).toLocaleString('fr-CA')
 
-function SurfaceSummary({ data }: { data: SurfaceSummaryData }) {
+function SurfaceSummary({ data, onCreateEstimate }: { data: SurfaceSummaryData; onCreateEstimate: () => void }) {
   // Tarifs unitaires par défaut (Québec, ordre de grandeur) — éditables.
   const [rates, setRates] = useState({ siding: 9, roof: 6, trim: 7, opening: 650 })
   const [waste, setWaste] = useState(10)
 
   const lines = [
-    { key: 'siding', label: 'Revêtement extérieur (murs nets)', qty: data.wallArea, unit: data.areaUnit, rate: rates.siding },
-    { key: 'roof', label: 'Toiture', qty: data.roofArea, unit: data.areaUnit, rate: rates.roof },
-    { key: 'trim', label: 'Garnitures / soffite / fascia', qty: data.trimArea, unit: data.areaUnit, rate: rates.trim },
-    { key: 'opening', label: 'Ouvertures (fenêtres + portes)', qty: data.windowCount + data.doorCount, unit: 'unité', rate: rates.opening },
+    { key: 'siding', label: 'Revêtement extérieur (murs nets)', qty: data.wallArea, unit: data.areaUnit, rate: rates.siding, area: true },
+    { key: 'roof', label: 'Toiture', qty: data.roofArea, unit: data.areaUnit, rate: rates.roof, area: true },
+    { key: 'trim', label: 'Garnitures / soffite / fascia', qty: data.trimArea, unit: data.areaUnit, rate: rates.trim, area: true },
+    { key: 'opening', label: 'Ouvertures (fenêtres + portes)', qty: data.windowCount + data.doorCount, unit: 'unité', rate: rates.opening, area: false },
   ] as const
 
   const subtotal = lines.reduce((s, l) => s + l.qty * l.rate, 0)
@@ -446,9 +512,18 @@ function SurfaceSummary({ data }: { data: SurfaceSummaryData }) {
           <span className="text-right text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{CAD(total)}</span>
         </div>
       </div>
-      <p className="mt-2 text-[11px] text-neutral-400">
-        Estimation rapide à partir des surfaces mesurées/estimées — ajustez les tarifs. Pour un devis détaillé (matériaux, taxes, main-d&apos;œuvre), utilisez l&apos;onglet Estimation.
-      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="max-w-xl text-[11px] text-neutral-400">
+          Estimation rapide à partir des surfaces mesurées/estimées — ajustez les tarifs. « Créer l&apos;estimation » génère un devis (lignes de matériaux, perte appliquée) dans l&apos;onglet Estimation, où vous ajoutez main-d&apos;œuvre, marge et taxes.
+        </p>
+        <button
+          onClick={onCreateEstimate}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+        >
+          <FileText className="h-4 w-4" />
+          Créer l’estimation
+        </button>
+      </div>
     </div>
   )
 }
