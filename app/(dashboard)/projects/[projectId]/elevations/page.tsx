@@ -10,7 +10,7 @@
 'use client'
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
-import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info, Box } from 'lucide-react'
+import { Building2, Loader2, Sparkles, Plus, Trash2, TriangleAlert, Info, Box, Calculator } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { buildReportData, type ReportSurface, type HouseModelLike } from '@/lib/report/buildReportData'
 
@@ -51,6 +51,7 @@ export default function ElevationsPage({ params }: Props) {
   const [roofPitch, setRoofPitch] = useState<number>(6)
   const [estimate, setEstimate] = useState<{ pitch?: number; confidence?: number; photosUsed?: number } | null>(null)
   const [facadeConf, setFacadeConf] = useState<Record<string, number>>({})
+  const [summary, setSummary] = useState<SurfaceSummaryData | null>(null)
   const [detecting, setDetecting] = useState<Side | 'all' | null>(null)
   const [estimating, setEstimating] = useState(false)
   const [building3d, setBuilding3d] = useState(false)
@@ -82,6 +83,11 @@ export default function ElevationsPage({ params }: Props) {
         ? { pitch: geo.roof_pitch ?? data.dims.pitch, confidence: geo.confidence, photosUsed: geo.photos_used }
         : null)
       setFacadeConf(geo?.facade_confidence ?? {})
+      setSummary({
+        wallArea: data.wallArea, roofArea: data.roofTotalArea, trimArea: data.trimArea,
+        windowCount: data.windowCount, doorCount: data.doorCount,
+        areaUnit: data.areaUnit, roofEstimated: data.roofEstimated,
+      })
 
       const ops: Opening[] = ((surfaces as ReportSurface[]) ?? [])
         .filter((s) => ['window', 'door', 'garage'].includes(s.surface_type ?? '') &&
@@ -346,6 +352,113 @@ export default function ElevationsPage({ params }: Props) {
           />
         ))}
       </div>
+
+      {summary && <SurfaceSummary data={summary} />}
+    </div>
+  )
+}
+
+// ── Récapitulatif des surfaces estimées + coûts ───────────────────────────────
+interface SurfaceSummaryData {
+  wallArea: number
+  roofArea: number
+  trimArea: number
+  windowCount: number
+  doorCount: number
+  areaUnit: string
+  roofEstimated: boolean
+}
+
+const CAD = (n: number) =>
+  n.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })
+const rndArea = (n: number) => Math.round(n).toLocaleString('fr-CA')
+const squares = (n: number) => (Math.round((n / 100) * 10) / 10).toLocaleString('fr-CA')
+
+function SurfaceSummary({ data }: { data: SurfaceSummaryData }) {
+  // Tarifs unitaires par défaut (Québec, ordre de grandeur) — éditables.
+  const [rates, setRates] = useState({ siding: 9, roof: 6, trim: 7, opening: 650 })
+  const [waste, setWaste] = useState(10)
+
+  const lines = [
+    { key: 'siding', label: 'Revêtement extérieur (murs nets)', qty: data.wallArea, unit: data.areaUnit, rate: rates.siding },
+    { key: 'roof', label: 'Toiture', qty: data.roofArea, unit: data.areaUnit, rate: rates.roof },
+    { key: 'trim', label: 'Garnitures / soffite / fascia', qty: data.trimArea, unit: data.areaUnit, rate: rates.trim },
+    { key: 'opening', label: 'Ouvertures (fenêtres + portes)', qty: data.windowCount + data.doorCount, unit: 'unité', rate: rates.opening },
+  ] as const
+
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.rate, 0)
+  const total = subtotal * (1 + waste / 100)
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="mb-3 flex items-center gap-2">
+        <Calculator className="h-5 w-5 text-neutral-700 dark:text-neutral-300" />
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Surfaces estimées & coût indicatif</h3>
+        {data.roofEstimated && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">toiture estimée</span>
+        )}
+      </div>
+
+      {/* Cartes de surfaces */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <SummaryStat value={`${rndArea(data.wallArea)} ${data.areaUnit}`} sub={`${squares(data.wallArea)} carrés`} label="Revêtement (murs)" />
+        <SummaryStat value={`${rndArea(data.roofArea)} ${data.areaUnit}`} sub={`${squares(data.roofArea)} carrés`} label="Toiture" />
+        <SummaryStat value={`${rndArea(data.trimArea)} ${data.areaUnit}`} sub={`${squares(data.trimArea)} carrés`} label="Garnitures" />
+        <SummaryStat value={String(data.windowCount + data.doorCount)} sub={`${data.windowCount} fen. · ${data.doorCount} portes`} label="Ouvertures" />
+      </div>
+
+      {/* Estimation de coût (tarifs éditables) */}
+      <div className="overflow-hidden rounded-lg border border-neutral-100 dark:border-neutral-800">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 bg-neutral-50 px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:bg-neutral-900">
+          <span>Poste</span><span className="text-right">Quantité</span><span className="text-right">Prix unit.</span><span className="text-right">Total</span>
+        </div>
+        {lines.map((l) => (
+          <div key={l.key} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t border-neutral-100 px-3 py-2 text-xs dark:border-neutral-800">
+            <span className="text-neutral-700 dark:text-neutral-300">{l.label}</span>
+            <span className="text-right tabular-nums text-neutral-500">{rndArea(l.qty)} {l.unit}</span>
+            <span className="flex items-center justify-end gap-1">
+              <input
+                value={String(rates[l.key])}
+                inputMode="decimal"
+                onChange={(e) => setRates((r) => ({ ...r, [l.key]: parseFloat(e.target.value) || 0 }))}
+                className="w-14 rounded border border-neutral-200 px-1.5 py-0.5 text-right text-xs focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
+              />
+              <span className="text-neutral-400">$</span>
+            </span>
+            <span className="text-right font-medium tabular-nums text-neutral-900 dark:text-neutral-100">{CAD(l.qty * l.rate)}</span>
+          </div>
+        ))}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2 border-t border-neutral-100 px-3 py-2 text-xs dark:border-neutral-800">
+          <span className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+            Facteur de perte / installation
+            <input
+              value={String(waste)}
+              inputMode="decimal"
+              onChange={(e) => setWaste(parseFloat(e.target.value) || 0)}
+              className="w-12 rounded border border-neutral-200 px-1.5 py-0.5 text-right text-xs focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
+            />
+            <span className="text-neutral-400">%</span>
+          </span>
+          <span className="text-right tabular-nums text-neutral-500">sous-total {CAD(subtotal)}</span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2 border-t-2 border-neutral-900 bg-neutral-50 px-3 py-2.5 dark:border-neutral-100 dark:bg-neutral-900">
+          <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Total indicatif</span>
+          <span className="text-right text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{CAD(total)}</span>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-neutral-400">
+        Estimation rapide à partir des surfaces mesurées/estimées — ajustez les tarifs. Pour un devis détaillé (matériaux, taxes, main-d&apos;œuvre), utilisez l&apos;onglet Estimation.
+      </p>
+    </div>
+  )
+}
+
+function SummaryStat({ value, sub, label }: { value: string; sub: string; label: string }) {
+  return (
+    <div className="rounded-lg bg-neutral-50 p-3 dark:bg-neutral-900">
+      <p className="text-base font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
+      <p className="text-[10px] text-neutral-400">{sub}</p>
+      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{label}</p>
     </div>
   )
 }
