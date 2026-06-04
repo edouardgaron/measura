@@ -14,12 +14,14 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Boxes,
 } from 'lucide-react'
 import {
   calcExteriorSummary,
   calcPaintGallons,
   SQ_FT_TO_SQ_M,
 } from '@/lib/measurement/surfaceCalculator'
+import QuoteOptionsEditor from '@/components/estimate/QuoteOptionsEditor'
 
 interface Props {
   params: Promise<{ projectId: string }>
@@ -126,7 +128,7 @@ const UNIT_OPTIONS: ItemUnit[] = ['pi²', 'm²', 'pi', 'unité', 'heure', 'jour'
 
 export default function EstimatePage({ params }: Props) {
   const { projectId } = use(params)
-  const [activeTab, setActiveTab] = useState<'surfaces' | 'materiaux' | 'prix' | 'resume'>(
+  const [activeTab, setActiveTab] = useState<'surfaces' | 'materiaux' | 'prix' | 'options' | 'resume'>(
     'surfaces'
   )
 
@@ -428,6 +430,12 @@ export default function EstimatePage({ params }: Props) {
             onClick={() => setActiveTab('prix')}
             icon={<DollarSign className="h-4 w-4" />}
             label="Prix"
+          />
+          <TabButton
+            active={activeTab === 'options'}
+            onClick={() => setActiveTab('options')}
+            icon={<Boxes className="h-4 w-4" />}
+            label="Options"
           />
           <TabButton
             active={activeTab === 'resume'}
@@ -840,6 +848,13 @@ export default function EstimatePage({ params }: Props) {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── TAB: OPTIONS ──────────────────────────────────────────────────── */}
+        {activeTab === 'options' && (
+          <div className="p-6">
+            <QuoteOptionsEditor projectId={projectId} />
           </div>
         )}
 
