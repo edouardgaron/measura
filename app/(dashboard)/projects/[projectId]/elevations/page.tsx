@@ -77,12 +77,17 @@ export default function ElevationsPage({ params }: Props) {
     setError(null)
     try {
       const supabase = createClient()
-      const [{ data: surfaces }, { data: house }, { data: project }] = await Promise.all([
+      const [{ data: surfaces }, { data: house }, { data: project }, { data: design }] = await Promise.all([
         supabase.from('surface_calculations').select('*').eq('project_id', projectId),
         supabase.from('house_models').select('footprint_json, roof_type, wall_height, geometry_json')
           .eq('project_id', projectId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('projects').select('unit_system').eq('id', projectId).single(),
+        supabase.from('design_versions').select('colors').eq('project_id', projectId).eq('is_active', true).limit(1).maybeSingle(),
       ])
+
+      // Couleurs du design actif pour l'aperçu 3D (sinon palette neutre par défaut).
+      const dc = (design?.colors ?? null) as { walls?: string; roof?: string; trim?: string } | null
+      if (dc) setColors((prev) => ({ walls: dc.walls ?? prev.walls, roof: dc.roof ?? prev.roof, trim: dc.trim ?? prev.trim }))
 
       const geo = (house?.geometry_json ?? null) as { method?: string; roof_pitch?: number; confidence?: number; photos_used?: number; facade_confidence?: Record<string, number> } | null
       const houseModel = house
