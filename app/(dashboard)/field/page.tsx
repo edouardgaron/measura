@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import { HardHat, Clock, MapPin, FileText, ArrowRight, CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import FieldClockButton from './FieldClockButton'
+import FieldPhotoButton from './FieldPhotoButton'
 
 const STATUS_LABEL: Record<string, string> = {
   planned: 'Planifié', in_progress: 'En cours', weather_hold: 'Pause météo',
@@ -130,6 +131,7 @@ async function FieldContent() {
                   )}
                   {e.project_id && (
                     <>
+                      <FieldPhotoButton projectId={e.project_id} />
                       <Link href={`/projects/${e.project_id}/site`} className="inline-flex h-11 items-center gap-1.5 rounded-full border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"><FileText className="h-4 w-4" />Rapport</Link>
                       <Link href={`/projects/${e.project_id}`} className="inline-flex h-11 items-center gap-1 rounded-full px-3 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">Projet<ArrowRight className="h-4 w-4" /></Link>
                     </>
