@@ -8,10 +8,10 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "Measura - Gestion construction",
-  description: "Plateforme tout-en-un pour entrepreneurs en construction : CRM, mesures, soumissions, chantiers, facturation.",
+  title: "ChantierPro 360 — Gestion d'entreprise de construction",
+  description: "Plateforme tout-en-un pour entrepreneurs en construction : CRM, mesures, soumissions, chantiers, rentabilité, facturation.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Measura" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "ChantierPro 360" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 }
 

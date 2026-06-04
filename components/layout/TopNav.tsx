@@ -75,8 +75,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Finances',
     roles: ['entrepreneur', 'admin'],
     items: [
-      { label: 'Comptabilité', href: '/accounting', roles: ['entrepreneur', 'admin'] },
+      { label: 'Dépenses', href: '/expenses', roles: ['entrepreneur', 'admin'] },
       { label: 'Rentabilité', href: '/profitability', roles: ['entrepreneur', 'admin'] },
+      { label: 'Rapports', href: '/reports', roles: ['entrepreneur', 'admin'] },
+      { label: 'Comptabilité', href: '/accounting', roles: ['entrepreneur', 'admin'] },
     ],
   },
 ]
@@ -114,7 +116,7 @@ export function TopNav({ user, email = null }: TopNavProps) {
           href="/dashboard"
           className="mr-4 text-xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100"
         >
-          Measura
+          ChantierPro&nbsp;360
         </Link>
 
         {/* Desktop nav */}

@@ -109,8 +109,8 @@ export default function RegisterPage() {
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 mb-4">
             <Ruler className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Measura</h1>
-          <p className="mt-1 text-blue-200 text-sm">Mesures de bâtiments professionnelles</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">ChantierPro 360</h1>
+          <p className="mt-1 text-blue-200 text-sm">La plateforme tout-en-un des entrepreneurs</p>
         </div>
 
         {/* Card */}
