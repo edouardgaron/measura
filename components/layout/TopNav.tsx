@@ -30,55 +30,57 @@ import {
 import { UserAvatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils/cn'
 import type { Profile, UserRole } from '@/lib/supabase/types'
+import { makeT, normalizeLocale, type Locale, type TranslationKey } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 
 interface NavLink {
-  label: string
+  label: TranslationKey
   href: string
   roles: UserRole[] | 'all'
 }
 
 interface NavGroup {
-  label: string
+  label: TranslationKey
   roles: UserRole[] | 'all'
   items: NavLink[]
 }
 
 // Direct top-level links (always visible, kept minimal like Hover)
 const PRIMARY_LINKS: NavLink[] = [
-  { label: 'Tableau de bord', href: '/dashboard', roles: 'all' },
-  { label: 'Projets', href: '/projects', roles: 'all' },
+  { label: 'nav.dashboard', href: '/dashboard', roles: 'all' },
+  { label: 'nav.projects', href: '/projects', roles: 'all' },
 ]
 
 // Everything else grouped behind compact dropdowns
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Ventes',
+    label: 'nav.sales',
     roles: ['entrepreneur', 'admin'],
     items: [
-      { label: 'Pipeline', href: '/crm', roles: ['entrepreneur', 'admin'] },
-      { label: 'Suivi IA', href: '/follow-ups', roles: ['entrepreneur', 'admin'] },
-      { label: 'Clients', href: '/clients', roles: ['entrepreneur', 'admin'] },
-      { label: 'Calendrier', href: '/schedule', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.pipeline', href: '/crm', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.aiFollowups', href: '/follow-ups', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.clients', href: '/clients', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.calendar', href: '/schedule', roles: ['entrepreneur', 'admin'] },
     ],
   },
   {
-    label: 'Opérations',
+    label: 'nav.operations',
     roles: ['entrepreneur', 'admin'],
     items: [
-      { label: 'Équipe', href: '/team', roles: ['entrepreneur', 'admin'] },
-      { label: 'Inventaire', href: '/inventory', roles: ['entrepreneur', 'admin'] },
-      { label: 'Marketplace', href: '/marketplace', roles: ['entrepreneur', 'admin'] },
-      { label: 'Automatisation', href: '/automations', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.team', href: '/team', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.inventory', href: '/inventory', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.marketplace', href: '/marketplace', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.automation', href: '/automations', roles: ['entrepreneur', 'admin'] },
     ],
   },
   {
-    label: 'Finances',
+    label: 'nav.finance',
     roles: ['entrepreneur', 'admin'],
     items: [
-      { label: 'Dépenses', href: '/expenses', roles: ['entrepreneur', 'admin'] },
-      { label: 'Rentabilité', href: '/profitability', roles: ['entrepreneur', 'admin'] },
-      { label: 'Rapports', href: '/reports', roles: ['entrepreneur', 'admin'] },
-      { label: 'Comptabilité', href: '/accounting', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.expenses', href: '/expenses', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.profitability', href: '/profitability', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.reports', href: '/reports', roles: ['entrepreneur', 'admin'] },
+      { label: 'nav.accounting', href: '/accounting', roles: ['entrepreneur', 'admin'] },
     ],
   },
 ]
@@ -90,12 +92,14 @@ function allowed(roles: UserRole[] | 'all', role: UserRole): boolean {
 interface TopNavProps {
   user: Profile
   email?: string | null
+  locale?: Locale
 }
 
-export function TopNav({ user, email = null }: TopNavProps) {
+export function TopNav({ user, email = null, locale = 'fr' }: TopNavProps) {
   const pathname = usePathname()
   const role = user.role
   const displayName = user.full_name ?? user.company_name ?? user.id.slice(0, 8)
+  const T = makeT(normalizeLocale(locale))
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
@@ -132,7 +136,7 @@ export function TopNav({ user, email = null }: TopNavProps) {
                   : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
               )}
             >
-              {link.label}
+              {T(link.label)}
             </Link>
           ))}
 
@@ -141,7 +145,7 @@ export function TopNav({ user, email = null }: TopNavProps) {
             if (items.length === 0) return null
             const groupActive = items.some((i) => isActive(i.href))
             return (
-              <DropdownMenu key={group.label}>
+              <DropdownMenu key={T(group.label)}>
                 <DropdownMenuTrigger
                   className={cn(
                     'inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors',
@@ -150,14 +154,14 @@ export function TopNav({ user, email = null }: TopNavProps) {
                       : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
                   )}
                 >
-                  {group.label}
+                  {T(group.label)}
                   <ChevronDown className="h-3.5 w-3.5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
                   {items.map((item) => (
                     <DropdownMenuItem key={item.href} asChild>
                       <Link href={item.href} className="cursor-pointer">
-                        {item.label}
+                        {T(item.label)}
                       </Link>
                     </DropdownMenuItem>
                   ))}
@@ -185,19 +189,19 @@ export function TopNav({ user, email = null }: TopNavProps) {
             <DropdownMenuContent align="end" className="w-56">
               {primary.map((link) => (
                 <DropdownMenuItem key={link.href} asChild>
-                  <Link href={link.href} className="cursor-pointer">{link.label}</Link>
+                  <Link href={link.href} className="cursor-pointer">{T(link.label)}</Link>
                 </DropdownMenuItem>
               ))}
               {groups.map((group) => {
                 const items = group.items.filter((i) => allowed(i.roles, role))
                 if (items.length === 0) return null
                 return (
-                  <React.Fragment key={group.label}>
+                  <React.Fragment key={T(group.label)}>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{T(group.label)}</DropdownMenuLabel>
                     {items.map((item) => (
                       <DropdownMenuItem key={item.href} asChild>
-                        <Link href={item.href} className="cursor-pointer">{item.label}</Link>
+                        <Link href={item.href} className="cursor-pointer">{T(item.label)}</Link>
                       </DropdownMenuItem>
                     ))}
                   </React.Fragment>
@@ -229,9 +233,13 @@ export function TopNav({ user, email = null }: TopNavProps) {
               <DropdownMenuItem asChild>
                 <Link href="/settings" className="cursor-pointer">
                   <Settings className="h-4 w-4" />
-                  Paramètres
+                  {T('nav.settings')}
                 </Link>
               </DropdownMenuItem>
+              <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                <span className="text-sm text-neutral-600 dark:text-neutral-300">{T('common.language')}</span>
+                <LanguageSwitcher variant="inline" />
+              </div>
               {(role === 'entrepreneur' || role === 'admin') && (
                 <DropdownMenuItem asChild>
                   <Link href="/settings/company" className="cursor-pointer">
@@ -267,7 +275,7 @@ export function TopNav({ user, email = null }: TopNavProps) {
                 className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
               >
                 <LogOut className="h-4 w-4" />
-                Se déconnecter
+                {T('nav.signout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

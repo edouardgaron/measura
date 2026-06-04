@@ -19,6 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils/format'
 import { APP_NAME } from '@/lib/brand'
+import { getLocale } from '@/lib/i18n/server'
+import { makeT } from '@/lib/i18n'
 import type { Project } from '@/lib/supabase/types'
 
 const CAD = (n: number) =>
@@ -93,6 +95,7 @@ function ProjectRow({ project }: { project: Project }) {
 
 async function DashboardContent() {
   const supabase = await createClient()
+  const T = makeT(await getLocale())
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -156,34 +159,34 @@ async function DashboardContent() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Bienvenue, {displayName} 👋</h1>
-          <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Votre activité {APP_NAME} en un coup d&apos;œil.</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{T('dash.welcome')}, {displayName} 👋</h1>
+          <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{T('dash.subtitle', { app: APP_NAME })}</p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <Link href="/clients"><Button variant="outline" size="md" className="gap-2"><FileSignature className="h-4 w-4" />Nouveau client</Button></Link>
-          <Link href="/projects/new"><Button size="md" className="gap-2"><Plus className="h-4 w-4" />Nouveau projet</Button></Link>
+          <Link href="/clients"><Button variant="outline" size="md" className="gap-2"><FileSignature className="h-4 w-4" />{T('common.newClient')}</Button></Link>
+          <Link href="/projects/new"><Button size="md" className="gap-2"><Plus className="h-4 w-4" />{T('common.newProject')}</Button></Link>
         </div>
       </div>
 
       {/* Finances */}
       <div>
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Finances</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">{T('dash.finance')}</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Kpi title="Revenus encaissés (mois)" value={CAD(revenueMonth)} sub={`Encaissé à vie : ${CAD(collectedAll)}`} icon={DollarSign} iconColor="text-emerald-600 dark:text-emerald-400" bgColor="bg-emerald-50 dark:bg-emerald-950/30" />
-          <Kpi title="Valeur signée (mois)" value={CAD(signedThisMonth)} sub={`${estimatesAccepted} soumission(s) acceptée(s)`} icon={TrendingUp} iconColor="text-neutral-700 dark:text-neutral-300" bgColor="bg-neutral-100 dark:bg-neutral-800" />
-          <Kpi title="Factures impayées" value={CAD(unpaidTotal)} sub={`${openInv.length} facture(s) ouverte(s)`} icon={Receipt} iconColor="text-amber-600 dark:text-amber-400" bgColor="bg-amber-50 dark:bg-amber-950/30" href={projectIds.length ? undefined : undefined} />
-          <Kpi title="En retard" value={CAD(overdueTotal)} sub={`${overdue.length} facture(s) en retard`} icon={AlertTriangle} iconColor="text-red-600 dark:text-red-400" bgColor="bg-red-50 dark:bg-red-950/30" />
+          <Kpi title={T('dash.revenueMonth')} value={CAD(revenueMonth)} sub={T('dash.collectedLife', { v: CAD(collectedAll) })} icon={DollarSign} iconColor="text-emerald-600 dark:text-emerald-400" bgColor="bg-emerald-50 dark:bg-emerald-950/30" />
+          <Kpi title={T('dash.signedMonth')} value={CAD(signedThisMonth)} sub={T('dash.acceptedCount', { n: estimatesAccepted })} icon={TrendingUp} iconColor="text-neutral-700 dark:text-neutral-300" bgColor="bg-neutral-100 dark:bg-neutral-800" />
+          <Kpi title={T('dash.unpaid')} value={CAD(unpaidTotal)} sub={T('dash.openInvoices', { n: openInv.length })} icon={Receipt} iconColor="text-amber-600 dark:text-amber-400" bgColor="bg-amber-50 dark:bg-amber-950/30" />
+          <Kpi title={T('dash.overdue')} value={CAD(overdueTotal)} sub={T('dash.overdueInvoices', { n: overdue.length })} icon={AlertTriangle} iconColor="text-red-600 dark:text-red-400" bgColor="bg-red-50 dark:bg-red-950/30" />
         </div>
       </div>
 
       {/* Opérations */}
       <div>
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Opérations</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">{T('dash.operations')}</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Kpi title="Chantiers actifs" value={String(activeProjects)} sub={`${totalProjects} au total`} icon={Activity} iconColor="text-orange-600 dark:text-orange-400" bgColor="bg-orange-50 dark:bg-orange-950/30" href="/projects" />
-          <Kpi title="Chantiers terminés" value={String(completedProjects)} icon={CheckCircle2} iconColor="text-emerald-600 dark:text-emerald-400" bgColor="bg-emerald-50 dark:bg-emerald-950/30" />
-          <Kpi title="Soumissions envoyées" value={String(estimatesSent)} sub={`${estimatesAccepted} acceptée(s)`} icon={Calculator} iconColor="text-violet-600 dark:text-violet-400" bgColor="bg-violet-50 dark:bg-violet-950/30" />
-          <Kpi title="Taux de conversion" value={`${conversion} %`} sub="soumissions acceptées / envoyées" icon={Wallet} iconColor="text-neutral-700 dark:text-neutral-300" bgColor="bg-neutral-100 dark:bg-neutral-800" />
+          <Kpi title={T('dash.activeJobs')} value={String(activeProjects)} sub={T('dash.totalCount', { n: totalProjects })} icon={Activity} iconColor="text-orange-600 dark:text-orange-400" bgColor="bg-orange-50 dark:bg-orange-950/30" href="/projects" />
+          <Kpi title={T('dash.completedJobs')} value={String(completedProjects)} icon={CheckCircle2} iconColor="text-emerald-600 dark:text-emerald-400" bgColor="bg-emerald-50 dark:bg-emerald-950/30" />
+          <Kpi title={T('dash.estimatesSent')} value={String(estimatesSent)} sub={T('dash.acceptedShort', { n: estimatesAccepted })} icon={Calculator} iconColor="text-violet-600 dark:text-violet-400" bgColor="bg-violet-50 dark:bg-violet-950/30" />
+          <Kpi title={T('dash.conversion')} value={`${conversion} %`} sub={T('dash.conversionSub')} icon={Wallet} iconColor="text-neutral-700 dark:text-neutral-300" bgColor="bg-neutral-100 dark:bg-neutral-800" />
         </div>
       </div>
 
@@ -191,8 +194,8 @@ async function DashboardContent() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle>Projets récents</CardTitle>
-            <Link href="/projects" className="rounded text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100">Voir tous</Link>
+            <CardTitle>{T('dash.recentProjects')}</CardTitle>
+            <Link href="/projects" className="rounded text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100">{T('common.viewAll')}</Link>
           </div>
         </CardHeader>
         <CardContent>
@@ -203,9 +206,9 @@ async function DashboardContent() {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FolderOpen className="mb-3 h-10 w-10 text-neutral-300 dark:text-neutral-600" />
-              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Aucun projet pour l&apos;instant</p>
-              <p className="mb-4 mt-1 text-xs text-neutral-500 dark:text-neutral-400">Créez votre premier projet pour commencer.</p>
-              <Link href="/projects/new"><Button size="sm" className="gap-2"><Plus className="h-3.5 w-3.5" />Nouveau projet</Button></Link>
+              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{T('dash.noProjects')}</p>
+              <p className="mb-4 mt-1 text-xs text-neutral-500 dark:text-neutral-400">{T('dash.noProjectsSub')}</p>
+              <Link href="/projects/new"><Button size="sm" className="gap-2"><Plus className="h-3.5 w-3.5" />{T('common.newProject')}</Button></Link>
             </div>
           )}
         </CardContent>
