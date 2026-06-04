@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
   const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET
   const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI ?? `${process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin}/api/quickbooks/callback`
 
-  if (!code || !clientId || !clientSecret) {
+  // Vérification CSRF : le state renvoyé par Intuit doit correspondre à
+  // l'utilisateur authentifié (posé comme state au démarrage du flux).
+  const state = request.nextUrl.searchParams.get('state')
+  if (!code || !clientId || !clientSecret || state !== user.id) {
     return NextResponse.redirect(new URL('/accounting?qb=error', request.url))
   }
 

@@ -44,6 +44,18 @@ export default function AccountingClient() {
     await fetch('/api/quickbooks/disconnect', { method: 'POST' })
     setQb((q) => (q ? { ...q, connected: false } : q))
   }
+  const [syncing, setSyncing] = useState(false)
+  async function syncInvoices() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/quickbooks/sync-invoices', { method: 'POST' })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(j.error ?? 'Erreur de synchronisation'); return }
+      alert(j.total === 0
+        ? 'Aucune nouvelle facture à synchroniser.'
+        : `${j.synced} facture(s) synchronisée(s) vers QuickBooks${j.failed ? `, ${j.failed} échec(s)` : ''}.${(j.errors ?? []).length ? '\n' + j.errors.join('\n') : ''}`)
+    } finally { setSyncing(false) }
+  }
 
   const qs = `from=${from}&to=${to}`
 
@@ -98,6 +110,9 @@ export default function AccountingClient() {
           {qb?.connected ? (
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" /> Connecté</span>
+              <button onClick={syncInvoices} disabled={syncing} className="inline-flex items-center gap-1.5 rounded-full bg-[#2ca01c] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+                {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />} Synchroniser les factures
+              </button>
               <button onClick={disconnectQb} className="rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-800 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700">Déconnecter</button>
             </div>
           ) : qb?.configured ? (
@@ -113,7 +128,7 @@ export default function AccountingClient() {
       <div className="flex items-start gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
         <span>
-          Les CSV s’importent dans QuickBooks, Acomba ou Excel. La connexion QuickBooks ci-dessus établit le lien OAuth ; l’envoi automatique des factures vers QuickBooks suivra. Le sommaire TPS/TVQ facilite vos remises de taxes.
+          Les CSV s’importent dans QuickBooks, Acomba ou Excel. Une fois QuickBooks connecté, « Synchroniser les factures » pousse vos factures (envoyées/payées) vers QuickBooks Online — chaque facture n’est envoyée qu’une fois. Le sommaire TPS/TVQ facilite vos remises de taxes.
         </span>
       </div>
     </div>

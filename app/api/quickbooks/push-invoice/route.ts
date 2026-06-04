@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
       lines,
       docNumber: invoice.invoice_number,
     })
+    await supabase.from('invoices')
+      .update({ qb_invoice_id: qbInvoiceId, qb_synced_at: new Date().toISOString() })
+      .eq('id', body.invoiceId)
     return NextResponse.json({ ok: true, qbInvoiceId })
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Erreur QuickBooks' }, { status: 502 })
