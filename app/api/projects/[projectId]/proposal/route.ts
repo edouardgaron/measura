@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
+import { sendProposalEmail } from '@/lib/messaging/reminders'
 
 interface Params { params: Promise<{ projectId: string }> }
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await req.json()
-  const { title, message, estimate_id, valid_until, locale } = body
+  const { title, message, estimate_id, valid_until, locale, client_email, client_name } = body
 
   const shareToken = randomBytes(24).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       message: message || null,
       estimate_id: estimate_id || null,
       valid_until: valid_until || null,
+      client_email: client_email || null,
+      client_name: client_name || null,
       locale: locale || 'fr',
       status: 'draft',
     })
@@ -58,13 +61,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await req.json()
-  const { id, ...patch } = body
+  const { id, action, ...patch } = body
 
   if (!id) return NextResponse.json({ error: 'id requis' }, { status: 400 })
 
-  if (patch.status === 'sent') {
-    patch.sent_at = new Date().toISOString()
+  // Action « relancer » : envoie une relance courriel sans changer le statut.
+  if (action === 'remind') {
+    const { data: owns } = await supabase.from('proposals').select('id').eq('id', id).eq('project_id', projectId).maybeSingle()
+    if (!owns) return NextResponse.json({ error: 'Proposition introuvable' }, { status: 404 })
+    const res = await sendProposalEmail(supabase, id, { isReminder: true })
+    if (!res.ok) return NextResponse.json({ error: res.error ?? 'Échec de la relance' }, { status: 502 })
+    return NextResponse.json({ ok: true })
   }
+
+  const becomingSent = patch.status === 'sent'
+  if (becomingSent) patch.sent_at = new Date().toISOString()
 
   const { data, error } = await supabase
     .from('proposals')
@@ -75,7 +86,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ proposal: data })
+
+  // Envoi initial par courriel au passage en « envoyée » (si courriel client).
+  let emailed = false
+  if (becomingSent && data?.client_email) {
+    const res = await sendProposalEmail(supabase, id, { isReminder: false })
+    emailed = res.ok
+  }
+  return NextResponse.json({ proposal: data, emailed })
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {

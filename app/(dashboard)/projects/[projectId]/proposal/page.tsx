@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useCallback } from 'react'
 import {
   Send, Plus, Copy, Check, ExternalLink, Trash2,
-  FileSignature, Clock, CheckCircle2, XCircle, Eye,
+  FileSignature, Clock, CheckCircle2, XCircle, Eye, Bell,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,6 +74,8 @@ export default function ProposalPage({ params }: Props) {
     message: '',
     estimate_id: '',
     valid_until: '',
+    client_name: '',
+    client_email: '',
   })
 
   const load = useCallback(async () => {
@@ -100,12 +102,14 @@ export default function ProposalPage({ params }: Props) {
         message: form.message || null,
         estimate_id: form.estimate_id || null,
         valid_until: form.valid_until || null,
+        client_name: form.client_name || null,
+        client_email: form.client_email || null,
       }),
     })
     if (res.ok) {
       toast({ variant: 'success', title: 'Proposition créée' })
       setShowNew(false)
-      setForm({ title: '', message: '', estimate_id: '', valid_until: '' })
+      setForm({ title: '', message: '', estimate_id: '', valid_until: '', client_name: '', client_email: '' })
       load()
     } else {
       const j = await res.json()
@@ -121,9 +125,21 @@ export default function ProposalPage({ params }: Props) {
       body: JSON.stringify({ id, status: 'sent' }),
     })
     if (res.ok) {
-      toast({ variant: 'success', title: 'Proposition marquée comme envoyée' })
+      const j = await res.json().catch(() => ({}))
+      toast({ variant: 'success', title: j.emailed ? 'Proposition envoyée par courriel' : 'Proposition marquée comme envoyée' })
       load()
     }
+  }
+
+  async function handleRemind(id: string) {
+    const res = await fetch(`/api/projects/${projectId}/proposal`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'remind' }),
+    })
+    const j = await res.json().catch(() => ({}))
+    toast(res.ok ? { variant: 'success', title: 'Relance envoyée au client' } : { variant: 'error', title: 'Échec', description: j.error })
+    if (res.ok) load()
   }
 
   async function handleDelete(id: string) {
@@ -227,10 +243,20 @@ export default function ProposalPage({ params }: Props) {
                         <button
                           onClick={() => handleMarkSent(p.id)}
                           className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Marquer comme envoyée"
+                          title={p.client_email ? 'Envoyer au client par courriel' : 'Marquer comme envoyée'}
                         >
                           <Send className="h-3 w-3" />
                           Envoyer
+                        </button>
+                      )}
+                      {(p.status === 'sent' || p.status === 'viewed') && p.client_email && (
+                        <button
+                          onClick={() => handleRemind(p.id)}
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-amber-600 hover:bg-amber-50 transition-colors"
+                          title="Relancer le client par courriel"
+                        >
+                          <Bell className="h-3 w-3" />
+                          Relancer
                         </button>
                       )}
                       <button
@@ -289,6 +315,22 @@ export default function ProposalPage({ params }: Props) {
                 </select>
               </div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Nom du client"
+                placeholder="Prénom Nom"
+                value={form.client_name}
+                onChange={e => setForm(f => ({ ...f, client_name: e.target.value }))}
+              />
+              <Input
+                label="Courriel du client"
+                type="email"
+                placeholder="client@courriel.com"
+                value={form.client_email}
+                onChange={e => setForm(f => ({ ...f, client_email: e.target.value }))}
+              />
+            </div>
+            <p className="-mt-2 text-xs text-gray-400">Avec un courriel, « Envoyer » expédie la proposition au client et permet les relances automatiques.</p>
             <Input
               label="Date d'expiration (optionnel)"
               type="date"

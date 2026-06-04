@@ -128,6 +128,93 @@ export async function processInvoiceReminders(
   return { overdue, reminded, failed }
 }
 
+// ── Propositions (soumissions) ───────────────────────────────────────────────
+
+interface ProposalRow {
+  id: string
+  share_token: string
+  title: string | null
+  message: string | null
+  client_name: string | null
+  client_email: string | null
+  valid_until: string | null
+  status: string
+  project_id: string
+  created_by: string | null
+  reminder_count: number | null
+}
+const PROPOSAL_COLS =
+  'id, share_token, title, message, client_name, client_email, valid_until, status, project_id, created_by, reminder_count'
+
+/** Envoie une proposition (ou sa relance) par courriel au client. */
+export async function sendProposalEmail(
+  supabase: SupabaseServer,
+  proposalId: string,
+  opts: { isReminder?: boolean; companyName?: string } = {}
+): Promise<{ ok: boolean; error?: string }> {
+  const { data: p } = await supabase.from('proposals').select(PROPOSAL_COLS).eq('id', proposalId).single()
+  if (!p) return { ok: false, error: 'Proposition introuvable' }
+  const row = p as unknown as ProposalRow
+  if (!row.client_email) return { ok: false, error: 'Aucun courriel client sur la proposition.' }
+
+  const companyName = opts.companyName ?? (await companyNameForProject(supabase, row.project_id))
+  const link = APP_URL() ? `${APP_URL()}/proposal/${row.share_token}` : null
+  const title = row.title || 'Proposition de services'
+  const subject = opts.isReminder ? `Rappel — ${title}` : title
+  const body = [
+    `Bonjour${row.client_name ? ` ${row.client_name}` : ''},`,
+    '',
+    opts.isReminder
+      ? `Petit rappel : votre proposition « ${title} » est en attente de votre réponse.`
+      : (row.message || `Voici notre proposition « ${title} ».`),
+    row.valid_until ? `Cette proposition est valide jusqu'au ${row.valid_until}.` : '',
+    '',
+    link ? `Consulter, choisir une option et signer : ${link}` : 'Veuillez nous revenir à votre meilleure convenance.',
+    '',
+    'Merci,',
+    companyName,
+  ].filter(Boolean).join('\n')
+
+  const res = await sendMessage(supabase, {
+    channel: 'email', to: row.client_email, subject, body,
+    ownerId: row.created_by, projectId: row.project_id, isAutomated: !!opts.isReminder,
+  })
+  if (res.ok && opts.isReminder) {
+    await supabase.from('proposals').update({
+      last_reminder_at: new Date().toISOString(),
+      reminder_count: (row.reminder_count ?? 0) + 1,
+    }).eq('id', row.id)
+  }
+  return { ok: res.ok, error: res.error }
+}
+
+/** Relance les soumissions envoyées/vues non signées (cron). */
+export async function processProposalReminders(
+  supabase: SupabaseServer,
+  limit = 100
+): Promise<{ reminded: number; failed: number }> {
+  const sinceIso = new Date(Date.now() - 3 * 86_400_000).toISOString() // envoyée il y a ≥ 3 j
+  const cooldownIso = new Date(Date.now() - REMINDER_COOLDOWN_DAYS * 86_400_000).toISOString()
+
+  const { data: rows } = await supabase
+    .from('proposals')
+    .select(PROPOSAL_COLS + ', sent_at, last_reminder_at')
+    .in('status', ['sent', 'viewed'])
+    .not('client_email', 'is', null)
+    .lt('sent_at', sinceIso)
+    .order('sent_at', { ascending: true })
+    .limit(limit)
+
+  let reminded = 0, failed = 0
+  for (const r of (rows ?? []) as unknown as (ProposalRow & { last_reminder_at: string | null })[]) {
+    if ((r.reminder_count ?? 0) >= MAX_REMINDERS) continue
+    if (r.last_reminder_at && r.last_reminder_at > cooldownIso) continue
+    const res = await sendProposalEmail(supabase, r.id, { isReminder: true })
+    if (res.ok) reminded++; else failed++
+  }
+  return { reminded, failed }
+}
+
 async function companyNameForProject(supabase: SupabaseServer, projectId: string): Promise<string> {
   try {
     const { data: p } = await supabase.from('projects').select('owner_id').eq('id', projectId).single()

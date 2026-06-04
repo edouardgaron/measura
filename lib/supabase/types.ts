@@ -421,8 +421,11 @@ export interface Proposal {
   accepted_at: string | null
   rejected_at: string | null
   client_name: string | null
+  client_email: string | null
   client_signature: string | null
   client_ip: string | null
+  last_reminder_at: string | null
+  reminder_count: number
   locale: 'fr' | 'en'
   created_at: string
   updated_at: string
