@@ -1,21 +1,44 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import ProposalAcceptClient from './ProposalAcceptClient'
 
 interface Props { params: Promise<{ token: string }> }
 
+interface QuoteOption {
+  id: string; tier: string; name: string | null; description: string | null
+  features: string[]; total: number; is_recommended: boolean
+}
+
 export default async function ProposalPublicPage({ params }: Props) {
   const { token } = await params
-  const supabase = await createClient()
+  // Page publique par token → client à privilèges service_role, strictement
+  // scopé par share_token (la lecture/maj n'a pas de policy RLS publique).
+  const supabase = await createAdminClient()
 
   const { data: proposal } = await supabase
     .from('proposals')
-    .select('*, project:projects(id, title, address_line1, address_city, address_province, notes), estimate:estimates(id, title, total, subtotal, tax_gst, tax_qst, items:estimate_items(*))')
+    .select('*, project:projects(id, title, address_line1, address_city, address_province, notes), estimate:estimates(id, title, total, subtotal, tax_gst, tax_qst, selected_option_id, items:estimate_items(*))')
     .eq('share_token', token)
     .single()
 
   if (!proposal) return notFound()
+
+  // Options de soumission (paliers) liées à l'estimation
+  let options: QuoteOption[] = []
+  const estimateId = (proposal.estimate as { id?: string } | null)?.id
+  if (estimateId) {
+    const { data: opts } = await supabase
+      .from('quote_options')
+      .select('id, tier, name, description, features, total, is_recommended, sort_order')
+      .eq('estimate_id', estimateId)
+      .order('sort_order', { ascending: true })
+    options = (opts ?? []).map((o) => ({
+      id: o.id, tier: o.tier, name: o.name, description: o.description,
+      features: Array.isArray(o.features) ? (o.features as string[]) : [],
+      total: Number(o.total ?? 0), is_recommended: !!o.is_recommended,
+    }))
+  }
 
   // Mark as viewed if first time
   if (proposal.status === 'sent') {
@@ -156,6 +179,8 @@ export default async function ProposalPublicPage({ params }: Props) {
           token={token}
           status={proposal.status as string}
           clientName={proposal.client_name}
+          options={options}
+          selectedOptionId={(proposal.estimate as { selected_option_id?: string | null } | null)?.selected_option_id ?? null}
         />
       </div>
     </div>

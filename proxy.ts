@@ -13,6 +13,7 @@ const publicPaths = [
   '/proposal',       // page publique de soumission/proposition (par token)
   '/offline',        // shell PWA hors-ligne
   '/api/auth',
+  '/api/proposal',   // réponse publique à une proposition (par token)
   '/api/invoice',    // checkout public de facture (par token)
   '/api/stripe',     // webhooks Stripe (vérifiés par signature)
   '/api/cron',       // tâches planifiées (vérifiées par CRON_SECRET)
