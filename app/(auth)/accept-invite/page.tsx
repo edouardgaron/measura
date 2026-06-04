@@ -22,8 +22,11 @@ type Form = z.infer<typeof schema>
 type PageState = 'loading' | 'invalid' | 'ready' | 'done'
 
 interface InviteInfo {
-  projectTitle: string
-  projectAddress: string
+  type?: 'project' | 'company'
+  projectTitle?: string
+  projectAddress?: string
+  companyName?: string
+  role?: string
   email: string
   token: string
 }
@@ -80,7 +83,10 @@ function AcceptInviteContent() {
         email: inviteInfo.email,
         password: values.password,
         options: {
-          data: { full_name: values.full_name, role: 'client' },
+          data: {
+            full_name: values.full_name,
+            role: inviteInfo.type === 'company' ? (inviteInfo.role ?? 'employee') : 'client',
+          },
         },
       })
       if (error) {
@@ -144,10 +150,22 @@ function AcceptInviteContent() {
           {state === 'ready' && inviteInfo && (
             <>
               <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <h2 className="font-semibold text-blue-900">Invitation de projet</h2>
-                <p className="text-sm text-blue-700 mt-1">{inviteInfo.projectTitle}</p>
-                {inviteInfo.projectAddress && (
-                  <p className="text-xs text-blue-600 mt-0.5">{inviteInfo.projectAddress}</p>
+                {inviteInfo.type === 'company' ? (
+                  <>
+                    <h2 className="font-semibold text-blue-900">Invitation à l&apos;équipe</h2>
+                    <p className="text-sm text-blue-700 mt-1">{inviteInfo.companyName}</p>
+                    {inviteInfo.role && (
+                      <p className="text-xs text-blue-600 mt-0.5">Rôle : {inviteInfo.role}</p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h2 className="font-semibold text-blue-900">Invitation de projet</h2>
+                    <p className="text-sm text-blue-700 mt-1">{inviteInfo.projectTitle}</p>
+                    {inviteInfo.projectAddress && (
+                      <p className="text-xs text-blue-600 mt-0.5">{inviteInfo.projectAddress}</p>
+                    )}
+                  </>
                 )}
               </div>
 

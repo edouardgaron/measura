@@ -217,6 +217,18 @@ export interface CompanyMember {
   company?: Company
 }
 
+export interface CompanyInvitation {
+  id: string
+  company_id: string
+  email: string
+  role: Exclude<CompanyMemberRole, 'owner'>
+  token: string
+  invited_by: string | null
+  accepted_at: string | null
+  expires_at: string | null
+  created_at: string
+}
+
 export interface Estimate {
   id: string
   project_id: string

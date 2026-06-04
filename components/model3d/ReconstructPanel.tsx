@@ -3,8 +3,16 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Boxes, Loader2, Sparkles, Smartphone, Download, Info } from 'lucide-react'
+import { Boxes, Loader2, Sparkles, Smartphone, Download, Info, ScanLine, Ruler } from 'lucide-react'
 import ARViewer from '@/components/model3d/ARViewer'
+
+interface AutoResult {
+  dimensions: { width: number | null; depth: number | null; wallHeight: number | null; unit: string; confidence: number }
+  walls: Array<{ side: string; length: number; height: number; reference: string; confidence: number }>
+  openings: { total: number; perSide: Record<string, number> }
+  sidesProcessed: string[]
+  warnings: string[]
+}
 
 const GltfViewer = dynamic(() => import('@/components/model3d/GltfViewer'), {
   ssr: false,
@@ -12,11 +20,30 @@ const GltfViewer = dynamic(() => import('@/components/model3d/GltfViewer'), {
 })
 
 export default function ReconstructPanel({ projectId }: { projectId: string }) {
-  const [busy, setBusy] = useState<'parametric' | 'external' | null>(null)
+  const [busy, setBusy] = useState<'auto' | 'parametric' | 'external' | null>(null)
   const [gltfUrl, setGltfUrl] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [ar, setAr] = useState(false)
   const [stats, setStats] = useState<string | null>(null)
+  const [auto, setAuto] = useState<AutoResult | null>(null)
+  const [autoErr, setAutoErr] = useState<string | null>(null)
+
+  async function autoMeasure() {
+    setBusy('auto'); setAutoErr(null); setAuto(null)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/auto-measure`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+      })
+      const json = await res.json()
+      if (!res.ok) { setAutoErr(json.error ?? 'Erreur'); return }
+      if (json.error) { setAutoErr(json.error); return }
+      setAuto(json as AutoResult)
+    } catch (e) {
+      setAutoErr((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
 
   async function reconstruct(mode: 'parametric' | 'external') {
     setBusy(mode); setMsg(null)
@@ -59,6 +86,9 @@ export default function ReconstructPanel({ projectId }: { projectId: string }) {
       <p className="mt-1 text-sm text-gray-500">Génère un modèle 3D à partir des mesures et photos du projet.</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <button onClick={autoMeasure} disabled={busy !== null} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
+          {busy === 'auto' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanLine className="h-4 w-4" />} Analyse automatique (IA)
+        </button>
         <button onClick={() => reconstruct('parametric')} disabled={busy !== null} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
           {busy === 'parametric' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Boxes className="h-4 w-4" />} Reconstruire (paramétrique)
         </button>
@@ -67,7 +97,32 @@ export default function ReconstructPanel({ projectId }: { projectId: string }) {
         </button>
       </div>
 
+      {busy === 'auto' && <p className="mt-3 text-sm text-emerald-600">Analyse des façades en cours… (dimensions + ouvertures)</p>}
+      {autoErr && <p className="mt-3 text-sm text-amber-600">{autoErr}</p>}
       {msg && <p className="mt-3 text-sm text-amber-600">{msg}</p>}
+
+      {auto && (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="flex items-center justify-between">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-emerald-900"><Ruler className="h-4 w-4" /> Dimensions estimées</h4>
+            <ConfidenceBadge value={auto.dimensions.confidence} />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+            <Metric label="Largeur" value={auto.dimensions.width} unit={auto.dimensions.unit} />
+            <Metric label="Profondeur" value={auto.dimensions.depth} unit={auto.dimensions.unit} />
+            <Metric label="Hauteur mur" value={auto.dimensions.wallHeight} unit={auto.dimensions.unit} />
+          </div>
+          <p className="mt-3 text-xs text-emerald-800">
+            {auto.openings.total} ouverture(s) détectée(s) sur {auto.sidesProcessed.length} façade(s).
+            Les dimensions sont enregistrées — lancez maintenant <strong>Reconstruire (paramétrique)</strong>.
+          </p>
+          {auto.warnings.length > 0 && (
+            <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-amber-700">
+              {auto.warnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
 
       {gltfUrl && (
         <div className="mt-4 space-y-3">
@@ -91,4 +146,21 @@ export default function ReconstructPanel({ projectId }: { projectId: string }) {
       {ar && gltfUrl && <ARViewer src={gltfUrl} onClose={() => setAr(false)} />}
     </div>
   )
+}
+
+function Metric({ label, value, unit }: { label: string; value: number | null; unit: string }) {
+  return (
+    <div className="rounded-lg bg-white p-2 shadow-sm">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="text-lg font-semibold text-gray-900">
+        {value != null ? `${value.toFixed(2)} ${unit}` : '—'}
+      </div>
+    </div>
+  )
+}
+
+function ConfidenceBadge({ value }: { value: number }) {
+  const pct = Math.round(value * 100)
+  const tone = pct >= 75 ? 'bg-emerald-100 text-emerald-800' : pct >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+  return <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${tone}`}>Confiance {pct} %</span>
 }

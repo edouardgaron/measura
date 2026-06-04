@@ -43,9 +43,9 @@ export interface DetectOpeningsResult {
   warning?: string
 }
 
-interface NormBox { x: number; y: number; w: number; h: number }
-interface RawOpening { type?: string; box?: NormBox; confidence?: number }
-interface RawResponse { wall?: NormBox | null; openings?: RawOpening[] }
+export interface NormBox { x: number; y: number; w: number; h: number }
+export interface RawOpening { type?: string; box?: NormBox; confidence?: number }
+export interface RawResponse { wall?: NormBox | null; openings?: RawOpening[] }
 
 const SYSTEM = `Tu es un système de vision par ordinateur spécialisé en analyse de façades de bâtiments résidentiels. On te donne UNE photo d'une façade. Tu dois localiser le plan du mur principal puis chaque ouverture (fenêtre, porte, porte de garage).
 
@@ -141,20 +141,20 @@ export function mapDetections(
  * @param sideWidthFt   largeur réelle du mur de cette façade.
  * @param wallHeightFt  hauteur réelle du mur.
  */
-export async function detectOpenings(opts: {
-  imageUrl: string
-  sideWidthFt: number
-  wallHeightFt: number
-}): Promise<DetectOpeningsResult> {
-  const { imageUrl, sideWidthFt, wallHeightFt } = opts
+/**
+ * Appel vision bas niveau : renvoie les boîtes normalisées (mur + ouvertures)
+ * d'une photo de façade, SANS mise à l'échelle. Réutilisé par la détection
+ * d'ouvertures ET par l'estimation des dimensions (un seul appel IA par façade).
+ */
+export async function requestFacadeDetection(imageUrl: string): Promise<{
+  configured: boolean
+  raw: RawResponse | null
+  warning?: string
+}> {
   const client = getAnthropic()
   if (!client) {
-    return { configured: false, wallFound: false, openings: [], warning: 'ANTHROPIC_API_KEY manquante' }
+    return { configured: false, raw: null, warning: 'ANTHROPIC_API_KEY manquante' }
   }
-  if (!(sideWidthFt > 0) || !(wallHeightFt > 0)) {
-    return { configured: true, wallFound: false, openings: [], warning: 'Dimensions du mur inconnues' }
-  }
-
   try {
     const res = await client.messages.create({
       model: aiModel(),
@@ -174,16 +174,30 @@ export async function detectOpenings(opts: {
       .map((b) => b.text)
       .join('\n')
     const raw = extractJson(text)
-    if (!raw) {
-      return { configured: true, wallFound: false, openings: [], warning: 'Réponse IA inexploitable' }
-    }
-    return mapDetections(raw, sideWidthFt, wallHeightFt)
+    if (!raw) return { configured: true, raw: null, warning: 'Réponse IA inexploitable' }
+    return { configured: true, raw }
   } catch (e) {
-    return {
-      configured: true,
-      wallFound: false,
-      openings: [],
-      warning: `Erreur vision IA : ${(e as Error).message}`,
-    }
+    return { configured: true, raw: null, warning: `Erreur vision IA : ${(e as Error).message}` }
   }
+}
+
+/**
+ * Détecte les ouvertures d'une photo de façade via la vision Claude.
+ * @param imageUrl      URL accessible de l'image (p. ex. URL signée Supabase).
+ * @param sideWidthFt   largeur réelle du mur de cette façade.
+ * @param wallHeightFt  hauteur réelle du mur.
+ */
+export async function detectOpenings(opts: {
+  imageUrl: string
+  sideWidthFt: number
+  wallHeightFt: number
+}): Promise<DetectOpeningsResult> {
+  const { imageUrl, sideWidthFt, wallHeightFt } = opts
+  if (!(sideWidthFt > 0) || !(wallHeightFt > 0)) {
+    return { configured: true, wallFound: false, openings: [], warning: 'Dimensions du mur inconnues' }
+  }
+  const { configured, raw, warning } = await requestFacadeDetection(imageUrl)
+  if (!configured) return { configured: false, wallFound: false, openings: [], warning }
+  if (!raw) return { configured: true, wallFound: false, openings: [], warning }
+  return mapDetections(raw, sideWidthFt, wallHeightFt)
 }

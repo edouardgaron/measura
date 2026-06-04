@@ -133,7 +133,7 @@ test('génère le rapport PDF complet (style Hover)', async () => {
   const element = React.createElement(ReportTemplate, {
     project, measurements, photos: [], surfaces, houseModel,
     companyName: 'Innova Spray', locale: 'fr', propertyId: '21921408', modelId: '21955070',
-  })
+  }) as React.ReactElement<any>
   const buffer = await renderToBuffer(element)
   writeFileSync(resolve(OUT, 'rapport-mesures-final.pdf'), buffer)
   expect(buffer.length).toBeGreaterThan(2000)

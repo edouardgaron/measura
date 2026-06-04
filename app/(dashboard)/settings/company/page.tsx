@@ -71,6 +71,14 @@ type MemberWithProfile = Omit<CompanyMember, 'profile'> & {
   profile?: { id: string; full_name: string | null; avatar_url: string | null }
 }
 
+type PendingInvite = {
+  id: string
+  email: string
+  role: CompanyMemberRole
+  expires_at: string | null
+  created_at: string
+}
+
 function MemberRow({ member }: { member: MemberWithProfile }) {
   const name = member.profile?.full_name ?? member.user_id
   const initials = (member.profile?.full_name ?? 'U')
@@ -117,7 +125,9 @@ export default function CompanySettingsPage() {
 
   // Invite
   const [inviteEmail, setInviteEmail] = React.useState('')
+  const [inviteRole, setInviteRole] = React.useState<CompanyMemberRole>('employee')
   const [inviting, setInviting] = React.useState(false)
+  const [pendingInvites, setPendingInvites] = React.useState<PendingInvite[]>([])
 
   // Tax local state (synced from company)
   const [taxGst, setTaxGst] = React.useState(5)
@@ -243,14 +253,58 @@ export default function CompanySettingsPage() {
     setLogoUploading(false)
   }
 
+  // ── Invitations en attente ────────────────────────────────────────────────
+  const loadInvites = React.useCallback(async (companyId: string) => {
+    const res = await fetch(`/api/company/${companyId}/invite`)
+    if (!res.ok) return
+    const json = await res.json()
+    setPendingInvites(json.invitations ?? [])
+  }, [])
+
+  React.useEffect(() => {
+    if (company?.id) loadInvites(company.id)
+  }, [company?.id, loadInvites])
+
   // ── Invite member ─────────────────────────────────────────────────────────
   async function handleInvite() {
-    if (!inviteEmail.trim()) return
+    if (!inviteEmail.trim() || !company) return
     setInviting(true)
-    // TODO: wire to actual invite API + email
-    toast({ variant: 'info', title: 'Invitation envoyée', description: inviteEmail.trim() })
+    const res = await fetch(`/api/company/${company.id}/invite`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      toast({ variant: 'error', title: 'Erreur', description: json.error ?? "Échec de l'invitation" })
+      setInviting(false)
+      return
+    }
+    if (json.emailSent) {
+      toast({ variant: 'success', title: 'Invitation envoyée', description: inviteEmail.trim() })
+    } else {
+      toast({
+        variant: 'info',
+        title: 'Invitation créée',
+        description: `Courriel non configuré. Lien : ${json.inviteLink}`,
+      })
+    }
     setInviteEmail('')
+    setInviteRole('employee')
+    await loadInvites(company.id)
     setInviting(false)
+  }
+
+  async function revokeInvite(invitationId: string) {
+    if (!company) return
+    const res = await fetch(`/api/company/${company.id}/invite?invitationId=${invitationId}`, {
+      method: 'DELETE',
+    })
+    if (res.ok) {
+      setPendingInvites((prev) => prev.filter((i) => i.id !== invitationId))
+    } else {
+      toast({ variant: 'error', title: 'Erreur', description: 'Impossible de révoquer' })
+    }
   }
 
   if (loading) {
@@ -608,12 +662,42 @@ export default function CompanySettingsPage() {
               </div>
             )}
 
+            {/* Invitations en attente */}
+            {pendingInvites.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  Invitations en attente
+                </p>
+                {pendingInvites.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{inv.email}</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        {ROLE_LABELS[inv.role]} — en attente
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => revokeInvite(inv.id)}
+                      className="shrink-0 p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                      title="Révoquer l'invitation"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900">
               <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center gap-1.5">
                 <UserPlus className="h-4 w-4" />
                 Inviter un membre
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
                   value={inviteEmail}
@@ -622,6 +706,16 @@ export default function CompanySettingsPage() {
                   onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                   className="flex-1 h-9 rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
                 />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as CompanyMemberRole)}
+                  className="h-9 rounded-xl bg-neutral-100 border-transparent dark:bg-neutral-800 dark:text-neutral-100 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
+                >
+                  <option value="employee">Employé</option>
+                  <option value="estimator">Estimateur</option>
+                  <option value="inspector">Inspecteur</option>
+                  <option value="admin">Admin</option>
+                </select>
                 <Button
                   onClick={handleInvite}
                   loading={inviting}

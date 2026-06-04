@@ -56,7 +56,7 @@ export async function GET(
       *,
       members:company_members(
         id, role, is_active, joined_at,
-        profile:profiles(id, full_name, avatar_url)
+        profile:profiles!user_id(id, full_name, avatar_url)
       )
     `)
     .eq('id', companyId)
