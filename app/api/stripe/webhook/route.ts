@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { tierForPriceId } from '@/lib/stripe/billing'
 
 // Le webhook a besoin du corps brut pour vérifier la signature.
 export const runtime = 'nodejs'
@@ -29,8 +30,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Signature invalide' }, { status: 400 })
   }
 
+  // ── Abonnement SaaS de l'entreprise ──────────────────────────────────────
+  if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+    const sub = event.data.object as Stripe.Subscription
+    await syncSubscription(stripe, sub)
+    return NextResponse.json({ received: true })
+  }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
+
+    // Checkout d'abonnement : synchronise l'état sur la compagnie puis termine.
+    if (session.mode === 'subscription' && typeof session.subscription === 'string') {
+      const sub = await stripe.subscriptions.retrieve(session.subscription)
+      await syncSubscription(stripe, sub)
+      return NextResponse.json({ received: true })
+    }
+
     const meta = session.metadata ?? {}
     const invoiceId = meta.invoice_id
     const projectId = meta.project_id
@@ -85,4 +101,35 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+/**
+ * Met à jour l'entreprise (companies) à partir d'un abonnement Stripe :
+ * tier, statut, période, essai. Localise l'entreprise via company_id en
+ * metadata, sinon via stripe_customer_id.
+ */
+async function syncSubscription(stripe: Stripe, sub: Stripe.Subscription) {
+  const admin = await createAdminClient()
+  const priceId = sub.items.data[0]?.price?.id ?? null
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
+  const canceled = sub.status === 'canceled'
+  const tier = canceled ? 'free' : tierForPriceId(priceId)
+
+  const patch = {
+    stripe_customer_id: customerId,
+    stripe_subscription_id: sub.status === 'canceled' ? null : sub.id,
+    subscription_status: sub.status,
+    subscription_price_id: sub.status === 'canceled' ? null : priceId,
+    subscription_tier: tier,
+    current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+    trial_ends_at: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
+    updated_at: new Date().toISOString(),
+  }
+
+  const companyId = sub.metadata?.company_id
+  if (companyId) {
+    await admin.from('companies').update(patch).eq('id', companyId)
+  } else {
+    await admin.from('companies').update(patch).eq('stripe_customer_id', customerId)
+  }
 }

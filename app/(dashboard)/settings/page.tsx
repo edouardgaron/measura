@@ -5,7 +5,7 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Save, User, Building2, ArrowRight, Sun, Moon, Monitor } from 'lucide-react'
+import { Save, User, Building2, ArrowRight, Sun, Moon, Monitor, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -131,6 +131,27 @@ export default function SettingsPage() {
       </div>
 
       <AppearanceCard />
+
+      {/* Abonnement SaaS */}
+      <Card>
+        <CardContent className="p-0">
+          <Link
+            href="/settings/billing"
+            className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                <CreditCard className="h-5 w-5 text-neutral-700 dark:text-neutral-200" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-neutral-100">{T('settings.billing')}</p>
+                <p className="text-xs text-gray-500 dark:text-neutral-400">{T('settings.billingSub')}</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-gray-400" />
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* Tab buttons */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-neutral-800">
