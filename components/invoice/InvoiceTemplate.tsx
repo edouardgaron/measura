@@ -1,5 +1,6 @@
 // components/invoice/InvoiceTemplate.tsx
 import React from 'react'
+import { APP_NAME } from '@/lib/brand'
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type { Invoice, InvoiceItem } from '@/lib/supabase/types'
 
@@ -81,12 +82,12 @@ export default function InvoiceTemplate({
   const qstPct = ((invoice.tax_qst_rate ?? 0) * 100).toFixed(3).replace(/\.?0+$/, '')
 
   return (
-    <Document title={`Facture ${invoice.invoice_number}`} author={companyName ?? 'Measura'}>
+    <Document title={`Facture ${invoice.invoice_number}`} author={companyName ?? APP_NAME}>
       <Page size="A4" style={styles.page}>
         <View style={styles.topRow}>
           <View>
             {companyLogo && <Image src={companyLogo} style={styles.logo} />}
-            <Text style={styles.companyName}>{companyName ?? 'Measura'}</Text>
+            <Text style={styles.companyName}>{companyName ?? APP_NAME}</Text>
             {companyAddress && <Text style={styles.companyMeta}>{companyAddress}</Text>}
             {companyPhone && <Text style={styles.companyMeta}>{companyPhone}</Text>}
             {companyEmail && <Text style={styles.companyMeta}>{companyEmail}</Text>}
@@ -155,7 +156,7 @@ export default function InvoiceTemplate({
         )}
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>{(companyName ?? 'Measura') + ` · Facture ${invoice.invoice_number}`}</Text>
+          <Text style={styles.footerText}>{(companyName ?? APP_NAME) + ` · Facture ${invoice.invoice_number}`}</Text>
         </View>
       </Page>
     </Document>

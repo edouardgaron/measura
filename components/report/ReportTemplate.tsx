@@ -7,6 +7,7 @@
 // annotées, photos.
 // ============================================================
 import React from 'react'
+import { APP_NAME } from '@/lib/brand'
 import {
   Document, Page, Text, View, Image, StyleSheet,
   Svg, Polygon, Line, Rect, Circle, G, Path,
@@ -138,7 +139,7 @@ function fmtPitch(p: number | null) {
 function Footer({ companyName, generatedOn }: { companyName?: string; generatedOn: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName ?? 'Measura'}</Text>
+      <Text style={styles.footerText}>{companyName ?? APP_NAME}</Text>
       <Text style={styles.footerText}>{generatedOn}</Text>
       <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
     </View>
@@ -396,7 +397,7 @@ export default function ReportTemplate(props: ReportTemplateProps) {
   const address = fmtAddress(project)
   const data: ReportData = buildReportData(surfaces, houseModel)
   const gen = `Généré le ${today}`
-  const brand = companyName ?? 'Measura'
+  const brand = companyName ?? APP_NAME
   const heroPhoto = photos.find((p) => p.url)?.url
   const photosWithUrls = photos.filter((p) => p.url)
   const propId = propertyId ?? project.id.replace(/-/g, '').slice(0, 8).toUpperCase()
@@ -410,12 +411,12 @@ export default function ReportTemplate(props: ReportTemplateProps) {
   const hasSurfaces = surfaces.length > 0
 
   return (
-    <Document title={`Mesures complètes — ${project.title}`} author={companyName ?? 'Measura'}>
+    <Document title={`Mesures complètes — ${project.title}`} author={companyName ?? APP_NAME}>
       {/* ── Couverture ─────────────────────────────────────────────────────── */}
       <Page size="A4" style={styles.cover}>
         <View style={styles.coverHead}>
           <View>
-            <Text style={styles.brand}>{companyName ?? 'Measura'}</Text>
+            <Text style={styles.brand}>{companyName ?? APP_NAME}</Text>
             <Text style={styles.brandSub}>Mesures complètes</Text>
           </View>
           <View style={styles.topRight}>
@@ -435,8 +436,8 @@ export default function ReportTemplate(props: ReportTemplateProps) {
 
         <View style={styles.coverFooter}>
           <Text style={styles.legal}>
-            © {new Date(project.created_at).getFullYear()} {companyName ?? 'Measura'}. Ce document, les images et les
-            données de mesure sont fournis « tels quels ». Measura ne donne aucune garantie quant à l&apos;exactitude,
+            © {new Date(project.created_at).getFullYear()} {companyName ?? APP_NAME}. Ce document, les images et les
+            données de mesure sont fournis « tels quels ». {brand} ne donne aucune garantie quant à l&apos;exactitude,
             l&apos;exhaustivité ou l&apos;adéquation à un usage particulier. Vérifiez les quantités avant toute commande.
           </Text>
           <View style={styles.idBlock}>

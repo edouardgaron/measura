@@ -19,6 +19,8 @@ export interface ProfitabilityInput {
   // Coûts réels (depuis le chantier)
   realLaborCost: number
   realMaterialCost: number
+  /** Dépenses directes réelles (module Dépenses : carburant, sous-traitant, permis, location, matériaux achetés…). */
+  realExpenses?: number
   realHours: number
   // Seuils (optionnels)
   thresholds?: Partial<ProfitabilityThresholds>
@@ -61,6 +63,7 @@ export interface ProfitabilityResult {
   hoursVariance: number | null
   realLaborCost: number
   realMaterialCost: number
+  realExpenses: number
   realHours: number
   plannedLaborCost: number
   plannedMaterialCost: number
@@ -90,7 +93,8 @@ export function computeProfitability(input: ProfitabilityInput): ProfitabilityRe
       (input.plannedEquipmentCost ?? 0) +
       (input.plannedOverheadCost ?? 0)
   )
-  const realCost = round2((input.realLaborCost ?? 0) + (input.realMaterialCost ?? 0))
+  const realExpenses = round2(input.realExpenses ?? 0)
+  const realCost = round2((input.realLaborCost ?? 0) + (input.realMaterialCost ?? 0) + realExpenses)
 
   const plannedProfit = round2(revenue - plannedCost)
   const realProfit = round2(revenue - realCost)
@@ -117,6 +121,7 @@ export function computeProfitability(input: ProfitabilityInput): ProfitabilityRe
     hoursVariance,
     realLaborCost: round2(input.realLaborCost),
     realMaterialCost: round2(input.realMaterialCost),
+    realExpenses,
     realHours: round2(input.realHours),
     plannedLaborCost: round2(input.plannedLaborCost ?? 0),
     plannedMaterialCost: round2(input.plannedMaterialCost ?? 0),

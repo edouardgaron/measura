@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   TrendingUp, TrendingDown, AlertTriangle, AlertOctagon, CheckCircle2,
-  Loader2, RefreshCw, Users, DollarSign, Clock, Package,
+  Loader2, RefreshCw, Users, DollarSign, Clock, Package, Receipt,
 } from 'lucide-react'
 import type { ProfitabilityAlert, ProfitabilityResult } from '@/lib/profitability/compute'
 
@@ -16,8 +16,14 @@ interface PerEmployee {
 interface ApiResponse {
   profitability: ProfitabilityResult
   perEmployee: PerEmployee[]
+  expensesByCategory?: { category: string; amount: number }[]
   hasEstimate: boolean
   estimateStatus: string | null
+}
+
+const EXP_CAT_LABEL: Record<string, string> = {
+  material: 'Matériaux', labor: 'Main-d’œuvre', equipment: 'Équipement', subcontractor: 'Sous-traitant',
+  permit: 'Permis', fuel: 'Carburant', rental: 'Location', insurance: 'Assurance', office: 'Bureau', other: 'Autre',
 }
 
 const money = (n: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(n)
@@ -123,7 +129,20 @@ export default function ProfitabilityClient({ projectId }: { projectId: string }
         <h3 className="mb-4 text-base font-semibold text-gray-900">Prévu vs réel</h3>
         <CompareBar label="Main d'œuvre" planned={p.plannedLaborCost} real={p.realLaborCost} icon={<Users className="h-4 w-4" />} />
         <CompareBar label="Matériaux" planned={p.plannedMaterialCost} real={p.realMaterialCost} icon={<Package className="h-4 w-4" />} />
+        {p.realExpenses > 0 && (
+          <CompareBar label="Dépenses directes" planned={0} real={p.realExpenses} icon={<Receipt className="h-4 w-4" />} />
+        )}
         <CompareBar label="Coût total" planned={p.plannedCost} real={p.realCost} icon={<DollarSign className="h-4 w-4" />} bold />
+
+        {(data.expensesByCategory ?? []).length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {(data.expensesByCategory ?? []).map((c) => (
+              <span key={c.category} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                {EXP_CAT_LABEL[c.category] ?? c.category} : {money(c.amount)}
+              </span>
+            ))}
+          </div>
+        )}
         {p.plannedHours != null && (
           <CompareBar label="Heures" planned={p.plannedHours} real={p.realHours} icon={<Clock className="h-4 w-4" />} unit="h" />
         )}

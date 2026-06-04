@@ -6,8 +6,15 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Receipt, Plus, Trash2, Download, Loader2, TriangleAlert, X } from 'lucide-react'
+import { Receipt, Plus, Trash2, Download, Loader2, TriangleAlert, X, Paperclip } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+// Ouvre le reçu (URL signée du bucket photos) dans un nouvel onglet.
+async function openReceipt(path: string) {
+  const supabase = createClient()
+  const { data } = await supabase.storage.from('photos').createSignedUrl(path, 3600)
+  if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+}
 
 interface Expense {
   id: string
@@ -23,6 +30,7 @@ interface Expense {
   payment_method: string
   billable: boolean
   notes: string | null
+  receipt_storage_path: string | null
 }
 
 const CATEGORIES: { key: string; label: string }[] = [
@@ -154,7 +162,14 @@ export default function ExpensesPage() {
                   <td className="px-4 py-2.5 text-right tabular-nums text-neutral-500">{CAD(e.amount)}</td>
                   <td className="px-4 py-2.5 text-right font-medium tabular-nums text-neutral-900 dark:text-neutral-100">{CAD(e.total)}</td>
                   <td className="px-4 py-2.5 text-neutral-500">{METHODS.find((m) => m.key === e.payment_method)?.label ?? e.payment_method}</td>
-                  <td className="px-4 py-2.5"><button onClick={() => remove(e.id)} className="rounded p-1 text-neutral-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-1">
+                      {e.receipt_storage_path && (
+                        <button onClick={() => openReceipt(e.receipt_storage_path!)} title="Voir le reçu" className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800"><Paperclip className="h-4 w-4" /></button>
+                      )}
+                      <button onClick={() => remove(e.id)} className="rounded p-1 text-neutral-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -176,6 +191,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 function ExpenseForm({ projects, onSaved }: { projects: { id: string; title: string }[]; onSaved: (e: Expense) => void }) {
   const [f, setF] = useState({ supplier: '', category: 'material', description: '', project_id: '', expense_date: new Date().toISOString().slice(0, 10), amount: '', payment_method: 'card', billable: true })
+  const [receipt, setReceipt] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const amount = parseFloat(f.amount) || 0
@@ -186,7 +202,18 @@ function ExpenseForm({ projects, onSaved }: { projects: { id: string; title: str
     if (amount <= 0) { setErr('Entrez un montant.'); return }
     setSaving(true); setErr(null)
     try {
-      const res = await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...f, project_id: f.project_id || null, amount }) })
+      // Téléverse le reçu (bucket photos, préfixe receipts/) si fourni.
+      let receipt_storage_path: string | null = null
+      if (receipt) {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        const ext = receipt.name.split('.').pop() || 'jpg'
+        const path = `receipts/${user?.id ?? 'anon'}/${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage.from('photos').upload(path, receipt, { contentType: receipt.type || 'image/jpeg', upsert: false })
+        if (upErr) throw new Error(`Reçu : ${upErr.message}`)
+        receipt_storage_path = path
+      }
+      const res = await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...f, project_id: f.project_id || null, amount, receipt_storage_path }) })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error ?? 'Erreur')
       onSaved(body.expense)
@@ -205,6 +232,7 @@ function ExpenseForm({ projects, onSaved }: { projects: { id: string; title: str
         <Field label="Montant avant taxes ($)"><input inputMode="decimal" className={input} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} placeholder="0.00" /></Field>
         <Field label="Méthode de paiement"><select className={input} value={f.payment_method} onChange={(e) => setF({ ...f, payment_method: e.target.value })}>{METHODS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select></Field>
         <Field label="Description"><input className={input} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} placeholder="Détail" /></Field>
+        <Field label="Photo du reçu (optionnel)"><input type="file" accept="image/*" capture="environment" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} className="block w-full text-xs text-neutral-500 file:mr-3 file:rounded-full file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-neutral-700 dark:file:bg-neutral-800 dark:file:text-neutral-200" /></Field>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-neutral-500">TPS {CAD(gst)} · TVQ {CAD(qst)} · <span className="font-semibold text-neutral-900 dark:text-neutral-100">Total {CAD(total)}</span></p>

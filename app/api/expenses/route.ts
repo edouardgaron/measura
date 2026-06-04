@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
     total,
     payment_method: method,
     billable: body.billable === false ? false : true,
+    receipt_storage_path: (body.receipt_storage_path as string) || null,
     notes: (body.notes as string) || null,
   }
 

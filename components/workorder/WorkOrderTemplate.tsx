@@ -1,5 +1,6 @@
 // components/workorder/WorkOrderTemplate.tsx
 import React from 'react'
+import { APP_NAME } from '@/lib/brand'
 import {
   Document,
   Page,
@@ -364,7 +365,7 @@ export default function WorkOrderTemplate({
 
   const footer = (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName ?? 'Measura'}</Text>
+      <Text style={styles.footerText}>{companyName ?? APP_NAME}</Text>
       <Text style={styles.footerText}>{`${t.title} ${t.no} ${workOrder.wo_number}`}</Text>
       <Text
         style={styles.footerText}
@@ -374,7 +375,7 @@ export default function WorkOrderTemplate({
   )
 
   return (
-    <Document title={`${t.title} ${t.no} ${workOrder.wo_number} — ${project.title}`} author={companyName ?? 'Measura'}>
+    <Document title={`${t.title} ${t.no} ${workOrder.wo_number} — ${project.title}`} author={companyName ?? APP_NAME}>
       {/* ── Page 1 ── */}
       <Page size="A4" style={styles.page}>
         {/* Header */}
@@ -384,7 +385,7 @@ export default function WorkOrderTemplate({
             <View>
               <Text style={styles.headerTitle}>{t.title}</Text>
               <Text style={styles.headerCompany}>
-                {(companyName ?? 'Measura') + (companyPhone ? ` · ${companyPhone}` : '')}
+                {(companyName ?? APP_NAME) + (companyPhone ? ` · ${companyPhone}` : '')}
               </Text>
             </View>
           </View>

@@ -1,5 +1,6 @@
 // components/site/DailyReportTemplate.tsx
 import React from 'react'
+import { APP_NAME } from '@/lib/brand'
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type {
   DailyReport,
@@ -119,21 +120,21 @@ export default function DailyReportTemplate({
 
   const footer = (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName ?? 'Measura'}</Text>
+      <Text style={styles.footerText}>{companyName ?? APP_NAME}</Text>
       <Text style={styles.footerText}>Rapport journalier — {frDate(report.report_date)}</Text>
       <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </View>
   )
 
   return (
-    <Document title={`Rapport journalier ${frDate(report.report_date)} — ${project.title}`} author={companyName ?? 'Measura'}>
+    <Document title={`Rapport journalier ${frDate(report.report_date)} — ${project.title}`} author={companyName ?? APP_NAME}>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             {companyLogo && <Image src={companyLogo} style={styles.logo} />}
             <View>
               <Text style={styles.headerTitle}>RAPPORT JOURNALIER</Text>
-              <Text style={styles.headerSub}>{companyName ?? 'Measura'}</Text>
+              <Text style={styles.headerSub}>{companyName ?? APP_NAME}</Text>
             </View>
           </View>
           <View style={styles.headerRight}>

@@ -1,5 +1,6 @@
 // components/plans/PlanTemplate.tsx
 import React from 'react'
+import { APP_NAME } from '@/lib/brand'
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Line, Rect, Polygon } from '@react-pdf/renderer'
 import type { Project } from '@/lib/supabase/types'
 import type { PlanData } from '@/lib/plans/geometry'
@@ -82,14 +83,14 @@ export default function PlanTemplate({ project, plan, companyName, companyLogo }
 
   const footer = (
     <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName ?? 'Measura'} — Plans</Text>
+      <Text style={styles.footerText}>{companyName ?? APP_NAME} — Plans</Text>
       <Text style={styles.footerText}>{project.title}</Text>
       <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </View>
   )
 
   return (
-    <Document title={`Plans — ${project.title}`} author={companyName ?? 'Measura'}>
+    <Document title={`Plans — ${project.title}`} author={companyName ?? APP_NAME}>
       {/* Page 1 — Vue en plan */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>

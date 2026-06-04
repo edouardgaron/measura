@@ -47,9 +47,24 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     .select('total_cost')
     .eq('project_id', projectId)
 
+  // Dépenses directes du chantier (module Dépenses) → coût réel
+  const { data: expenseRows } = await supabase
+    .from('expenses')
+    .select('total, category')
+    .eq('project_id', projectId)
+
   const realLaborCost = (timeEntries ?? []).reduce((s, t) => s + (t.labor_cost ?? 0), 0)
   const realHours = (timeEntries ?? []).reduce((s, t) => s + (t.hours ?? 0), 0)
   const realMaterialCost = (materials ?? []).reduce((s, m) => s + (m.total_cost ?? 0), 0)
+  const realExpenses = (expenseRows ?? []).reduce((s, e) => s + Number(e.total ?? 0), 0)
+
+  // Ventilation des dépenses par catégorie (pour affichage)
+  const expensesByCategory = Object.entries(
+    (expenseRows ?? []).reduce<Record<string, number>>((acc, e) => {
+      acc[e.category] = (acc[e.category] ?? 0) + Number(e.total ?? 0); return acc
+    }, {})
+  ).map(([category, amount]) => ({ category, amount: Math.round(amount * 100) / 100 }))
+    .sort((a, b) => b.amount - a.amount)
 
   // ── Répartition par employé ──
   const empMap = new Map<string, { name: string; hours: number; cost: number }>()
@@ -84,12 +99,14 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     plannedHours,
     realLaborCost,
     realMaterialCost,
+    realExpenses,
     realHours,
   })
 
   return NextResponse.json({
     profitability: result,
     perEmployee,
+    expensesByCategory,
     hasEstimate: !!estimate,
     estimateStatus: estimate?.status ?? null,
   })

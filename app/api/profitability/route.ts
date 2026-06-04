@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest) {
   }
 
   // Données liées (RLS filtre déjà par accès)
-  const [{ data: estimates }, { data: timeEntries }, { data: materials }] = await Promise.all([
+  const [{ data: estimates }, { data: timeEntries }, { data: materials }, { data: expenseRows }] = await Promise.all([
     supabase
       .from('estimates')
       .select('project_id, status, subtotal, labor_cost, material_cost, equipment_cost, overhead_cost, created_at')
@@ -33,6 +33,7 @@ export async function GET(_request: NextRequest) {
       .order('created_at', { ascending: false }),
     supabase.from('time_entries').select('project_id, hours, labor_cost').in('project_id', ids),
     supabase.from('daily_report_materials').select('project_id, total_cost').in('project_id', ids),
+    supabase.from('expenses').select('project_id, total').in('project_id', ids),
   ])
 
   // Indexation par projet
@@ -70,6 +71,11 @@ export async function GET(_request: NextRequest) {
     matByProject.set(m.project_id, (matByProject.get(m.project_id) ?? 0) + (m.total_cost ?? 0))
   }
 
+  const expByProject = new Map<string, number>()
+  for (const e of expenseRows ?? []) {
+    expByProject.set(e.project_id, (expByProject.get(e.project_id) ?? 0) + Number(e.total ?? 0))
+  }
+
   const rows = projectList.map((p) => {
     const est = estByProject.get(p.id)
     const labor = laborByProject.get(p.id) ?? { hours: 0, cost: 0 }
@@ -83,6 +89,7 @@ export async function GET(_request: NextRequest) {
       plannedOverheadCost: est?.overhead_cost ?? 0,
       realLaborCost: labor.cost,
       realMaterialCost: matCost,
+      realExpenses: expByProject.get(p.id) ?? 0,
       realHours: labor.hours,
     })
 
