@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest) {
       .select('project_id, status, subtotal, labor_cost, material_cost, equipment_cost, overhead_cost, created_at')
       .in('project_id', ids)
       .order('created_at', { ascending: false }),
-    supabase.from('time_entries').select('project_id, hours, labor_cost').in('project_id', ids),
+    supabase.from('time_entries').select('project_id, hours, labor_cost, employee_id, employee_name').in('project_id', ids),
     supabase.from('daily_report_materials').select('project_id, total_cost').in('project_id', ids),
     supabase.from('expenses').select('project_id, total').in('project_id', ids),
   ])
@@ -134,7 +134,35 @@ export async function GET(_request: NextRequest) {
   ;(totals as { realMarginPct?: number | null }).realMarginPct =
     totals.revenue > 0 ? round2((totals.realProfit / totals.revenue) * 100) : null
 
-  return NextResponse.json({ rows, totals })
+  // ── Rentabilité par employé (agrégée sur tous les chantiers) ──────────────
+  // Contribution au profit = profit réel du chantier × (coût M.O. de l'employé
+  // sur ce chantier / coût M.O. total du chantier).
+  const realProfitByProject = new Map(rows.map((r) => [r.projectId, r.realProfit]))
+  const empAgg = new Map<string, { name: string; hours: number; cost: number; profit: number }>()
+  for (const t of timeEntries ?? []) {
+    const key = t.employee_id ?? `name:${t.employee_name ?? 'Inconnu'}`
+    const cur = empAgg.get(key) ?? { name: t.employee_name ?? 'Inconnu', hours: 0, cost: 0, profit: 0 }
+    cur.hours += t.hours ?? 0
+    cur.cost += t.labor_cost ?? 0
+    const projLabor = laborByProject.get(t.project_id)?.cost ?? 0
+    const projProfit = realProfitByProject.get(t.project_id) ?? 0
+    if (projLabor > 0) cur.profit += projProfit * ((t.labor_cost ?? 0) / projLabor)
+    empAgg.set(key, cur)
+  }
+  // Compléter les noms manquants via la table employees
+  const empIds = [...empAgg.keys()].filter((k) => !k.startsWith('name:'))
+  if (empIds.length) {
+    const { data: emps } = await supabase.from('employees').select('id, full_name').in('id', empIds)
+    for (const e of emps ?? []) { const cur = empAgg.get(e.id); if (cur) cur.name = e.full_name ?? cur.name }
+  }
+  const perEmployee = [...empAgg.values()]
+    .map((v) => ({
+      name: v.name, hours: round2(v.hours), cost: round2(v.cost), profit: round2(v.profit),
+      marginPct: v.cost > 0 ? round2((v.profit / (v.profit + v.cost)) * 100) : null,
+    }))
+    .sort((a, b) => b.profit - a.profit)
+
+  return NextResponse.json({ rows, totals, perEmployee })
 }
 
 function round2(n: number): number {
