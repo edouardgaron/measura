@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  DollarSign, TrendingUp, TrendingDown, AlertOctagon, Loader2, RefreshCw, Clock, Users,
+  DollarSign, TrendingUp, TrendingDown, AlertOctagon, Loader2, RefreshCw, Clock, Users, Users2,
 } from 'lucide-react'
 
 interface Row {
@@ -36,11 +36,13 @@ const pct = (n: number | null) => (n == null ? '—' : `${n.toFixed(1)} %`)
 const DOT: Record<string, string> = { danger: 'bg-red-500', warning: 'bg-amber-500', info: 'bg-emerald-500' }
 
 interface EmployeeRow { name: string; hours: number; cost: number; profit: number; marginPct: number | null }
+interface TeamRow { name: string; color: string; hours: number; cost: number; profit: number; marginPct: number | null }
 
 export default function RollupClient() {
   const [rows, setRows] = useState<Row[]>([])
   const [totals, setTotals] = useState<Totals | null>(null)
   const [perEmployee, setPerEmployee] = useState<EmployeeRow[]>([])
+  const [perTeam, setPerTeam] = useState<TeamRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,6 +56,7 @@ export default function RollupClient() {
       setRows(json.rows)
       setTotals(json.totals)
       setPerEmployee(json.perEmployee ?? [])
+      setPerTeam(json.perTeam ?? [])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur')
     } finally {
@@ -136,6 +139,45 @@ export default function RollupClient() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Rentabilité par équipe */}
+          {perTeam.length > 0 && (
+            <div>
+              <h2 className="mb-2 mt-2 flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                <Users2 className="h-4 w-4" /> Rentabilité par équipe
+              </h2>
+              <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-neutral-100 text-left text-xs uppercase tracking-wide text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
+                    <tr>
+                      <th className="p-3">Équipe</th>
+                      <th className="p-3">Heures</th>
+                      <th className="p-3">Coût M.O.</th>
+                      <th className="p-3">Contribution au profit</th>
+                      <th className="p-3">Marge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {perTeam.map((tm) => (
+                      <tr key={tm.name} className="border-b border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50">
+                        <td className="p-3 font-medium text-neutral-900 dark:text-neutral-100">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tm.color }} />
+                            {tm.name}
+                          </span>
+                        </td>
+                        <td className="p-3 text-neutral-500 dark:text-neutral-400"><span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{tm.hours.toFixed(1)}</span></td>
+                        <td className="p-3 text-neutral-700 dark:text-neutral-300">{money(tm.cost)}</td>
+                        <td className={`p-3 font-medium ${tm.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{money(tm.profit)}</td>
+                        <td className="p-3 text-neutral-700 dark:text-neutral-300">{pct(tm.marginPct)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-[11px] text-neutral-400">Regroupe la contribution au profit des employés selon leur équipe. Configurez les équipes et l’affectation dans <Link href="/team" className="underline">Équipe</Link>.</p>
             </div>
           )}
 

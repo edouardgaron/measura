@@ -1,13 +1,13 @@
-// app/api/employees/[employeeId]/route.ts
+// app/api/teams/[teamId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-type RouteContext = { params: Promise<{ employeeId: string }> }
+type RouteContext = { params: Promise<{ teamId: string }> }
 
-const EDITABLE = ['full_name', 'role', 'email', 'phone', 'hourly_cost', 'hourly_rate', 'is_active', 'notes', 'company_id', 'team_id'] as const
+const EDITABLE = ['name', 'color', 'notes'] as const
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
-  const { employeeId } = await params
+  const { teamId } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -27,32 +27,28 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const { data, error } = await supabase
-    .from('employees')
+    .from('teams')
     .update(patch)
-    .eq('id', employeeId)
+    .eq('id', teamId)
     .select('*')
     .single()
 
   if (error || !data) {
     return NextResponse.json({ error: error?.message ?? 'Erreur mise à jour' }, { status: 500 })
   }
-  return NextResponse.json({ employee: data })
+  return NextResponse.json({ team: data })
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
-  const { employeeId } = await params
+  const { teamId } = await params
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  // Désactivation logique (préserve l'historique de pointage pour la rentabilité)
-  const { error } = await supabase
-    .from('employees')
-    .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq('id', employeeId)
-
+  // Les employés rattachés sont détachés automatiquement (ON DELETE SET NULL)
+  const { error } = await supabase.from('teams').delete().eq('id', teamId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

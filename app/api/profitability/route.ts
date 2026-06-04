@@ -149,20 +149,51 @@ export async function GET(_request: NextRequest) {
     if (projLabor > 0) cur.profit += projProfit * ((t.labor_cost ?? 0) / projLabor)
     empAgg.set(key, cur)
   }
-  // Compléter les noms manquants via la table employees
+  // Compléter les noms manquants + rattacher l'équipe via la table employees
+  const empTeam = new Map<string, string | null>() // employee_id → team_id
   const empIds = [...empAgg.keys()].filter((k) => !k.startsWith('name:'))
   if (empIds.length) {
-    const { data: emps } = await supabase.from('employees').select('id, full_name').in('id', empIds)
-    for (const e of emps ?? []) { const cur = empAgg.get(e.id); if (cur) cur.name = e.full_name ?? cur.name }
+    const { data: emps } = await supabase.from('employees').select('id, full_name, team_id').in('id', empIds)
+    for (const e of emps ?? []) {
+      const cur = empAgg.get(e.id); if (cur) cur.name = e.full_name ?? cur.name
+      empTeam.set(e.id, (e as { team_id: string | null }).team_id ?? null)
+    }
   }
-  const perEmployee = [...empAgg.values()]
-    .map((v) => ({
-      name: v.name, hours: round2(v.hours), cost: round2(v.cost), profit: round2(v.profit),
+  const perEmployee = [...empAgg.entries()]
+    .map(([key, v]) => ({
+      key, name: v.name, hours: round2(v.hours), cost: round2(v.cost), profit: round2(v.profit),
+      marginPct: v.cost > 0 ? round2((v.profit / (v.profit + v.cost)) * 100) : null,
+    }))
+    .sort((a, b) => b.profit - a.profit)
+    .map(({ key, ...rest }) => { void key; return rest })
+
+  // ── Rentabilité par équipe ────────────────────────────────────────────────
+  // On regroupe la contribution de chaque employé selon son équipe (team_id).
+  // Les pointages sans employé identifié (clé name:) tombent dans « Sans équipe ».
+  const NO_TEAM = '__none__'
+  const teamAgg = new Map<string, { hours: number; cost: number; profit: number }>()
+  for (const [key, v] of empAgg.entries()) {
+    const teamId = key.startsWith('name:') ? NO_TEAM : (empTeam.get(key) ?? NO_TEAM)
+    const cur = teamAgg.get(teamId) ?? { hours: 0, cost: 0, profit: 0 }
+    cur.hours += v.hours; cur.cost += v.cost; cur.profit += v.profit
+    teamAgg.set(teamId, cur)
+  }
+  const teamMeta = new Map<string, { name: string; color: string }>()
+  const realTeamIds = [...teamAgg.keys()].filter((k) => k !== NO_TEAM)
+  if (realTeamIds.length) {
+    const { data: teams } = await supabase.from('teams').select('id, name, color').in('id', realTeamIds)
+    for (const t of teams ?? []) teamMeta.set(t.id, { name: t.name, color: t.color ?? '#0f172a' })
+  }
+  const perTeam = [...teamAgg.entries()]
+    .map(([id, v]) => ({
+      name: id === NO_TEAM ? 'Sans équipe' : (teamMeta.get(id)?.name ?? 'Équipe'),
+      color: id === NO_TEAM ? '#9ca3af' : (teamMeta.get(id)?.color ?? '#0f172a'),
+      hours: round2(v.hours), cost: round2(v.cost), profit: round2(v.profit),
       marginPct: v.cost > 0 ? round2((v.profit / (v.profit + v.cost)) * 100) : null,
     }))
     .sort((a, b) => b.profit - a.profit)
 
-  return NextResponse.json({ rows, totals, perEmployee })
+  return NextResponse.json({ rows, totals, perEmployee, perTeam })
 }
 
 function round2(n: number): number {

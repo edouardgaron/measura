@@ -573,6 +573,17 @@ export interface Employee {
   hourly_rate: number
   is_active: boolean
   notes: string | null
+  team_id: string | null
+  created_at: string
+  updated_at: string
+}
+export interface Team {
+  id: string
+  owner_id: string
+  company_id: string | null
+  name: string
+  color: string
+  notes: string | null
   created_at: string
   updated_at: string
 }
