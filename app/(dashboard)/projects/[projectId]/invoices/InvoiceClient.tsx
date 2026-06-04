@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from 'react'
 import {
-  Receipt, Plus, Trash2, Loader2, Save, FileDown, ChevronRight, Link2, CreditCard, AlertCircle, Check,
+  Receipt, Plus, Trash2, Loader2, Save, FileDown, ChevronRight, Link2, CreditCard, AlertCircle, Check, Bell,
 } from 'lucide-react'
 import { computeInvoiceTotals } from '@/lib/invoice/compute'
 import type { Invoice, InvoiceItem, InvoiceStatus } from '@/lib/supabase/types'
@@ -165,7 +165,7 @@ function InvoiceEditor({
       .map((it) => ({ description: it.description, quantity: it.quantity, unit: it.unit, unit_price: it.unit_price }))
   )
   const [saving, setSaving] = useState(false)
-  const [busy, setBusy] = useState<'pdf' | 'pay' | null>(null)
+  const [busy, setBusy] = useState<'pdf' | 'pay' | 'remind' | null>(null)
   const [copied, setCopied] = useState(false)
 
   function set<K extends keyof Invoice>(k: K, v: Invoice[K]) {
@@ -234,6 +234,17 @@ function InvoiceEditor({
     }
   }
 
+  async function remind() {
+    if (!form.client_email) { alert('Ajoutez un courriel client avant de relancer.'); return }
+    setBusy('remind')
+    try {
+      await save()
+      const res = await fetch(`/api/projects/${projectId}/invoices/${invoice.id}/remind`, { method: 'POST' })
+      const j = await res.json().catch(() => ({}))
+      alert(res.ok ? `Relance envoyée à ${form.client_email}.` : (j.error ?? 'Échec de la relance'))
+    } finally { setBusy(null) }
+  }
+
   function copyLink() {
     const url = `${window.location.origin}/invoice/${form.share_token}`
     navigator.clipboard.writeText(url)
@@ -269,6 +280,11 @@ function InvoiceEditor({
           <button onClick={pdf} disabled={busy === 'pdf'} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
             {busy === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />} PDF
           </button>
+          {!['paid', 'draft', 'cancelled'].includes(form.status) && (
+            <button onClick={remind} disabled={busy === 'remind'} title="Envoyer une relance de paiement au client" className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-60">
+              {busy === 'remind' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />} Relancer
+            </button>
+          )}
           {stripeEnabled && (
             <button onClick={() => pay('balance')} disabled={busy === 'pay'} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
               {busy === 'pay' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />} Encaisser

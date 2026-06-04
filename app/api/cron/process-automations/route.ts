@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { processScheduledMessages } from '@/lib/messaging/automations'
+import { processInvoiceReminders } from '@/lib/messaging/reminders'
 
 export const runtime = 'nodejs'
 
@@ -19,8 +20,9 @@ async function handle(request: NextRequest) {
   }
 
   const admin = await createAdminClient()
-  const result = await processScheduledMessages(admin, 100)
-  return NextResponse.json({ ok: true, ...result })
+  const messages = await processScheduledMessages(admin, 100)
+  const invoices = await processInvoiceReminders(admin, 100)
+  return NextResponse.json({ ok: true, messages, invoices })
 }
 
 export async function POST(request: NextRequest) {
