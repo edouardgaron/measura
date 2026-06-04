@@ -8,10 +8,12 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { HardHat, Clock, MapPin, FileText, ArrowRight, CalendarDays } from 'lucide-react'
+import { HardHat, Clock, MapPin, ArrowRight, CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import FieldClockButton from './FieldClockButton'
 import FieldPhotoButton from './FieldPhotoButton'
+import FieldReportSheet from './FieldReportSheet'
+import FieldOfflineSync from './FieldOfflineSync'
 
 const STATUS_LABEL: Record<string, string> = {
   planned: 'Planifié', in_progress: 'En cours', weather_hold: 'Pause météo',
@@ -89,6 +91,8 @@ async function FieldContent() {
         {!employee && <p className="mt-3 text-[11px] opacity-70">Vue dispatch (aucun profil employé lié à ce compte).</p>}
       </div>
 
+      <FieldOfflineSync />
+
       {/* Chantiers */}
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 py-14 text-center dark:border-neutral-800">
@@ -132,7 +136,7 @@ async function FieldContent() {
                   {e.project_id && (
                     <>
                       <FieldPhotoButton projectId={e.project_id} />
-                      <Link href={`/projects/${e.project_id}/site`} className="inline-flex h-11 items-center gap-1.5 rounded-full border border-neutral-300 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"><FileText className="h-4 w-4" />Rapport</Link>
+                      <FieldReportSheet projectId={e.project_id} projectTitle={e.project?.title ?? e.title} />
                       <Link href={`/projects/${e.project_id}`} className="inline-flex h-11 items-center gap-1 rounded-full px-3 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">Projet<ArrowRight className="h-4 w-4" /></Link>
                     </>
                   )}
