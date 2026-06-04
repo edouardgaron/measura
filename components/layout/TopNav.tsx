@@ -48,6 +48,7 @@ interface NavGroup {
 // Direct top-level links (always visible, kept minimal like Hover)
 const PRIMARY_LINKS: NavLink[] = [
   { label: 'nav.dashboard', href: '/dashboard', roles: 'all' },
+  { label: 'nav.field', href: '/field', roles: 'all' },
   { label: 'nav.projects', href: '/projects', roles: 'all' },
 ]
 

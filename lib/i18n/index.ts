@@ -18,6 +18,7 @@ export const LOCALE_LABELS: Record<Locale, string> = { fr: 'Français', en: 'Eng
 const fr = {
   // Navigation
   'nav.dashboard': 'Tableau de bord',
+  'nav.field': 'Ma journée',
   'nav.projects': 'Projets',
   'nav.sales': 'Ventes',
   'nav.operations': 'Opérations',
@@ -75,6 +76,7 @@ type Key = keyof typeof fr
 
 const en: Record<Key, string> = {
   'nav.dashboard': 'Dashboard',
+  'nav.field': 'My day',
   'nav.projects': 'Projects',
   'nav.sales': 'Sales',
   'nav.operations': 'Operations',
