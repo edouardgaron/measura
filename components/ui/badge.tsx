@@ -1,6 +1,7 @@
 // components/ui/badge.tsx
 import * as React from 'react'
 import { cn } from '@/lib/utils/cn'
+import { makeT, type Locale, type TranslationKey } from '@/lib/i18n'
 import type { ProjectStatus } from '@/lib/supabase/types'
 
 export type BadgeVariant =
@@ -67,23 +68,17 @@ const STATUS_PILL: Record<ProjectStatus, string> = {
   archived: 'bg-neutral-400 text-white',
 }
 
-const STATUS_LABELS_FR: Record<ProjectStatus, string> = {
-  draft: 'Brouillon',
-  photos_pending: 'Photos nécessaires',
-  measuring: 'En mesure',
-  review: 'En révision',
-  completed: 'Complete',
-  archived: 'Archivé',
-}
-
 /** Render a project status as a solid Hover-style pill */
 export function StatusBadge({
   status,
   className,
+  locale = 'fr',
 }: {
   status: ProjectStatus
   className?: string
+  locale?: Locale
 }) {
+  const t = makeT(locale)
   return (
     <span
       className={cn(
@@ -92,7 +87,7 @@ export function StatusBadge({
         className
       )}
     >
-      {STATUS_LABELS_FR[status]}
+      {t(`projects.status.${status}` as TranslationKey)}
     </span>
   )
 }

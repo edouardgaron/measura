@@ -13,20 +13,22 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from '@/components/ui/toast'
 import { useTheme, type Theme } from '@/components/theme/ThemeProvider'
+import { makeT, getClientLocale } from '@/lib/i18n'
 import type { Profile } from '@/lib/supabase/types'
 
 function AppearanceCard() {
   const { theme, setTheme } = useTheme()
+  const T = makeT(getClientLocale())
   const options: { value: Theme; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { value: 'light', label: 'Clair', icon: Sun },
-    { value: 'dark', label: 'Sombre', icon: Moon },
-    { value: 'system', label: 'Système', icon: Monitor },
+    { value: 'light', label: T('theme.light'), icon: Sun },
+    { value: 'dark', label: T('theme.dark'), icon: Moon },
+    { value: 'system', label: T('theme.system'), icon: Monitor },
   ]
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Apparence</CardTitle>
-        <CardDescription>Choisissez le thème clair, sombre ou selon votre système</CardDescription>
+        <CardTitle>{T('settings.appearance')}</CardTitle>
+        <CardDescription>{T('settings.appearanceSub')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3">
@@ -65,6 +67,7 @@ type ProfileForm = z.infer<typeof profileSchema>
 
 export default function SettingsPage() {
   const supabase = createClient()
+  const T = makeT(getClientLocale())
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [activeTab, setActiveTab] = React.useState<'profile' | 'company'>('profile')
@@ -105,9 +108,9 @@ export default function SettingsPage() {
       .eq('id', user.id)
 
     if (error) {
-      toast({ variant: 'error', title: 'Erreur', description: error.message })
+      toast({ variant: 'error', title: T('settings.error'), description: error.message })
     } else {
-      toast({ variant: 'success', title: 'Sauvegardé', description: 'Vos paramètres ont été mis à jour.' })
+      toast({ variant: 'success', title: T('settings.saved'), description: T('settings.savedDesc') })
     }
   }
 
@@ -123,8 +126,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">Paramètres</h1>
-        <p className="text-gray-500 dark:text-neutral-400 mt-1">Gérez votre profil et les informations de votre entreprise</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">{T('settings.title')}</h1>
+        <p className="text-gray-500 dark:text-neutral-400 mt-1">{T('settings.subtitle')}</p>
       </div>
 
       <AppearanceCard />
@@ -140,7 +143,7 @@ export default function SettingsPage() {
           }`}
         >
           <User className="h-4 w-4" />
-          Profil
+          {T('settings.tab.profile')}
         </button>
         {(profile?.role === 'entrepreneur' || profile?.role === 'admin') && (
           <button
@@ -152,7 +155,7 @@ export default function SettingsPage() {
             }`}
           >
             <Building2 className="h-4 w-4" />
-            Entreprise
+            {T('settings.tab.company')}
           </button>
         )}
       </div>
@@ -160,18 +163,18 @@ export default function SettingsPage() {
       {activeTab === 'profile' && (
         <Card>
           <CardHeader>
-            <CardTitle>Informations personnelles</CardTitle>
-            <CardDescription>Mettez à jour votre nom et vos coordonnées</CardDescription>
+            <CardTitle>{T('settings.personalInfo')}</CardTitle>
+            <CardDescription>{T('settings.personalInfoSub')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
-                label="Nom complet"
+                label={T('settings.fullName')}
                 error={errors.full_name?.message}
                 {...register('full_name')}
               />
               <Input
-                label="Téléphone"
+                label={T('settings.phone')}
                 type="tel"
                 placeholder="+1 (514) 000-0000"
                 error={errors.phone?.message}
@@ -180,7 +183,7 @@ export default function SettingsPage() {
               <div className="pt-2">
                 <Button type="submit" loading={isSubmitting} className="gap-2">
                   <Save className="h-4 w-4" />
-                  Sauvegarder
+                  {T('settings.save')}
                 </Button>
               </div>
             </form>
@@ -191,8 +194,8 @@ export default function SettingsPage() {
       {activeTab === 'company' && (
         <Card>
           <CardHeader>
-            <CardTitle>Paramètres de l&apos;entreprise</CardTitle>
-            <CardDescription>Logo, taxes, prix par défaut, membres de l&apos;équipe et abonnement</CardDescription>
+            <CardTitle>{T('settings.companyTitle')}</CardTitle>
+            <CardDescription>{T('settings.companySub')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Link
@@ -204,8 +207,8 @@ export default function SettingsPage() {
                   <Building2 className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Configurer l&apos;entreprise</p>
-                  <p className="text-xs text-gray-500">Logo, taxes, équipe et abonnement</p>
+                  <p className="text-sm font-medium text-gray-900">{T('settings.configureCompany')}</p>
+                  <p className="text-xs text-gray-500">{T('settings.configureCompanySub')}</p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400" />
@@ -217,22 +220,22 @@ export default function SettingsPage() {
       {/* Danger zone */}
       <Card className="border-red-200">
         <CardHeader>
-          <CardTitle className="text-red-600">Zone dangereuse</CardTitle>
+          <CardTitle className="text-red-600">{T('settings.dangerZone')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-gray-600">
-            Une fois votre compte supprimé, toutes vos données seront perdues de façon permanente.
+            {T('settings.dangerText')}
           </p>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => {
-              if (confirm('Êtes-vous sûr de vouloir supprimer votre compte? Cette action est irréversible.')) {
-                toast({ variant: 'error', title: 'Contactez le support', description: 'Veuillez contacter support@measura.app pour supprimer votre compte.' })
+              if (confirm(T('settings.deleteConfirm'))) {
+                toast({ variant: 'error', title: T('settings.contactSupport'), description: T('settings.contactSupportDesc') })
               }
             }}
           >
-            Supprimer mon compte
+            {T('settings.deleteAccount')}
           </Button>
         </CardContent>
       </Card>

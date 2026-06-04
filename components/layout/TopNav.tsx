@@ -177,7 +177,7 @@ export function TopNav({ user, email = null, locale = 'fr' }: TopNavProps) {
 
         {/* Right cluster */}
         <div className="flex items-center gap-2">
-          <NouveauMenu />
+          <NouveauMenu t={T} />
 
           {/* Mobile menu */}
           <DropdownMenu>
@@ -287,33 +287,18 @@ export function TopNav({ user, email = null, locale = 'fr' }: TopNavProps) {
 }
 
 // "+ Nouveau" dropdown — two-line items like Hover
-function NouveauMenu() {
+function NouveauMenu({ t }: { t: (key: TranslationKey, vars?: Record<string, string | number>) => string }) {
   const items = [
-    {
-      icon: Upload,
-      title: 'Téléverser un plan',
-      desc: 'Obtenir des mesures et des métrés à partir d’un fichier',
-      href: '/projects/new',
-    },
-    {
-      icon: UserPlus,
-      title: 'Inviter à capturer',
-      desc: 'Demander à quelqu’un de prendre des photos',
-      href: '/invite',
-    },
-    {
-      icon: Sparkles,
-      title: 'Idées de design',
-      desc: 'Créer un nouveau projet de design',
-      href: '/projects/new',
-    },
+    { icon: Upload, title: t('nav.newUpload'), desc: t('nav.newUploadDesc'), href: '/projects/new' },
+    { icon: UserPlus, title: t('nav.newInvite'), desc: t('nav.newInviteDesc'), href: '/invite' },
+    { icon: Sparkles, title: t('nav.newDesign'), desc: t('nav.newDesignDesc'), href: '/projects/new' },
   ]
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900 px-4 text-sm font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 dark:focus-visible:ring-neutral-100 dark:focus-visible:ring-offset-neutral-950">
         <Plus className="h-4 w-4" />
-        Nouveau
+        {t('nav.new')}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-2">
         {items.map((item, i) => {

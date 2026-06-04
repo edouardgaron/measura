@@ -7,19 +7,9 @@ import { Search, SlidersHorizontal, Camera, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils/format'
+import { getLocale } from '@/lib/i18n/server'
+import { makeT, type TranslationKey, type Locale } from '@/lib/i18n'
 import type { Project, ProjectStatus } from '@/lib/supabase/types'
-
-// --- Status filter labels -----------------------------------------------------
-
-const STATUS_LABELS: Record<ProjectStatus | 'all', string> = {
-  all: 'Tous',
-  draft: 'Brouillon',
-  photos_pending: 'Photos nécessaires',
-  measuring: 'En mesure',
-  review: 'En révision',
-  completed: 'Complete',
-  archived: 'Archivé',
-}
 
 type ProjectWithPhotos = Project & {
   photos?: { storage_path: string; sort_order: number }[] | null
@@ -30,9 +20,11 @@ type ProjectWithPhotos = Project & {
 function ProjectCard({
   project,
   coverUrl,
+  locale,
 }: {
   project: ProjectWithPhotos
   coverUrl: string | null
+  locale: Locale
 }) {
   const subtitle =
     project.address_line1 ||
@@ -43,7 +35,7 @@ function ProjectCard({
       {/* Photo */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800">
         <span className="absolute left-3 top-3 z-10">
-          <StatusBadge status={project.status} />
+          <StatusBadge status={project.status} locale={locale} />
         </span>
         {coverUrl ? (
           <Image
@@ -79,9 +71,11 @@ function ProjectCard({
 function FilterPills({
   currentStatus,
   query,
+  t,
 }: {
   currentStatus: string
   query?: string
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string
 }) {
   const statuses: Array<ProjectStatus | 'all'> = [
     'all',
@@ -114,7 +108,7 @@ function FilterPills({
                 : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700',
             ].join(' ')}
           >
-            {STATUS_LABELS[status]}
+            {t(`projects.status.${status}` as TranslationKey)}
           </Link>
         )
       })}
@@ -136,6 +130,9 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const locale = await getLocale()
+  const T = makeT(locale)
 
   const { status: statusParam, q } = await searchParams
   const activeStatus = statusParam ?? 'all'
@@ -182,7 +179,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
               type="search"
               name="q"
               defaultValue={query ?? ''}
-              placeholder="Rechercher une propriété, adresse ou nom"
+              placeholder={T('projects.search')}
               className="h-11 w-full rounded-full border border-transparent bg-neutral-100 pl-11 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:bg-neutral-900 dark:focus-visible:ring-neutral-100"
             />
           </div>
@@ -191,18 +188,18 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             className="inline-flex h-11 items-center gap-2 rounded-full bg-neutral-100 px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Filtres
+            {T('projects.filters')}
           </button>
         </form>
 
-        <FilterPills currentStatus={activeStatus} query={query} />
+        <FilterPills currentStatus={activeStatus} query={query} t={T} />
       </div>
 
       {/* Grid */}
       {list.length > 0 ? (
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {list.map((project) => (
-            <ProjectCard key={project.id} project={project} coverUrl={coverUrl(project)} />
+            <ProjectCard key={project.id} project={project} coverUrl={coverUrl(project)} locale={locale} />
           ))}
         </div>
       ) : (
@@ -211,21 +208,17 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             <Camera className="h-7 w-7" strokeWidth={1.25} />
           </div>
           <p className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            {query || activeStatus !== 'all'
-              ? 'Aucun projet ne correspond'
-              : "Aucun projet pour l'instant"}
+            {query || activeStatus !== 'all' ? T('projects.empty.noMatch') : T('projects.empty.none')}
           </p>
           <p className="mb-6 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {query || activeStatus !== 'all'
-              ? 'Essayez un autre filtre ou une autre recherche.'
-              : 'Créez votre premier projet pour commencer à prendre des mesures.'}
+            {query || activeStatus !== 'all' ? T('projects.empty.noMatchSub') : T('projects.empty.noneSub')}
           </p>
           <Link
             href="/projects/new"
             className="inline-flex h-11 items-center gap-2 rounded-full bg-neutral-900 px-5 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
           >
             <Plus className="h-4 w-4" />
-            Nouveau projet
+            {T('projects.new')}
           </Link>
         </div>
       )}

@@ -5,13 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, FolderOpen, Mail } from 'lucide-react'
-import { formatDate } from '@/lib/utils/format'
+import { getLocale } from '@/lib/i18n/server'
+import { makeT } from '@/lib/i18n'
 
 export default async function ClientsPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const T = makeT(await getLocale())
 
   // Récupérer tous les membres de projets (clients) liés aux projets de l'entrepreneur
   const { data: members } = await supabase
@@ -52,8 +55,8 @@ export default async function ClientsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Clients</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{clients.length} client{clients.length !== 1 ? 's' : ''} au total</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{T('clients.title')}</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{T('clients.total', { n: clients.length })}</p>
         </div>
       </div>
 
@@ -62,12 +65,12 @@ export default async function ClientsPage() {
           <div className="h-16 w-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
             <Users className="h-8 w-8 text-neutral-500 dark:text-neutral-400" />
           </div>
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Aucun client pour l'instant</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{T('clients.empty.title')}</h2>
           <p className="text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm">
-            Vos clients apparaîtront ici une fois que vous les aurez invités à un projet.
+            {T('clients.empty.sub')}
           </p>
           <Link href="/projects/new" className="mt-4">
-            <Button>Créer un projet</Button>
+            <Button>{T('clients.empty.cta')}</Button>
           </Link>
         </div>
       ) : (
@@ -86,7 +89,7 @@ export default async function ClientsPage() {
                     <div className="flex items-center gap-1.5 mt-1">
                       <FolderOpen className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
                       <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {client.projects.length} projet{client.projects.length !== 1 ? 's' : ''}
+                        {T('clients.projects', { n: client.projects.length })}
                       </span>
                     </div>
                   </div>
@@ -105,7 +108,7 @@ export default async function ClientsPage() {
                   ))}
                   {client.projects.length > 2 && (
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                      +{client.projects.length - 2} autres projets
+                      {T('clients.more', { n: client.projects.length - 2 })}
                     </span>
                   )}
                 </div>
@@ -116,7 +119,7 @@ export default async function ClientsPage() {
                     className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
                   >
                     <Mail className="h-3.5 w-3.5" />
-                    Envoyer un courriel
+                    {T('clients.sendEmail')}
                   </a>
                 </div>
               </CardContent>
